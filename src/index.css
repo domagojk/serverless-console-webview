@@ -1,0 +1,73 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.logstreamslist {
+  margin: 20px;
+}
+.logstreamslist .logevent-time {
+  display: inline-block;
+  width: 180px;
+}
+.logstreamslist .logevent-header {
+  display: flex;
+  align-items: center;
+}
+.logstreamslist .logevent-shortmessage {
+  font-size: 0.9em;
+  color: #666;
+}
+.logstreamslist .logevent-longmessage {
+  margin-left: 25px;
+  padding: 10px;
+  border: 1px solid #e8e8e8;
+  color: #000;
+}
+
+.logstreamslist .relative-time {
+  display: block;
+}
+.logstreamslist .abs-time {
+  font-size: 0.8em;
+  color: #666;
+  line-height: 1;
+  display: block;
+}
+
+.logstreamslist .retry-message {
+  text-align: center;
+  color: #8e8e8e;;
+  padding-top: 5px;
+}
+.logstreamslist .retry-message .retry-link {
+  cursor: pointer;
+  color: #1890ff
+}
+.logstreamslist .retry-message .retry-link:hover {
+  color: #40a9ff
+}
+.logstreamslist .ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.logstream-header {
+  display: inline-block;
+}
+.refresh-logstream {
+  padding: 15px
+}
+
+.ant-collapse-borderless > .ant-collapse-item:last-child {
+  border-bottom: none;
+}
+
+.syntax-highlighter {
+  margin: 5px;
+  font-size: 0.9em;
+  background: #fff!important;
+}
