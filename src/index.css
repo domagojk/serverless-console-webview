@@ -7,59 +7,158 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.logstreamslist {
-  margin: 20px;
-}
-.logstreamslist .logevent-time {
-  display: inline-block;
-  width: 180px;
-}
-.logstreamslist .logevent-header {
-  display: flex;
-  align-items: center;
-}
-.logstreamslist .logevent-shortmessage {
-  font-size: 0.9em;
-  color: #666;
-}
-.logstreamslist .logevent-longmessage {
-  margin-left: 25px;
-  padding: 10px;
-  border: 1px solid #e8e8e8;
-  color: #000;
+/* dark theme start */
+body.dark {
+  background-color: #1e1e1e;
 }
 
-.logstreamslist .relative-time {
-  display: block;
+body.dark,
+body.dark body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark .ant-collapse > .ant-collapse-item > .ant-collapse-header,
+body.dark .logstreamslist .logevent-longmessage,
+body.dark .ant-tabs {
+  color: #f3f3f3;
 }
-.logstreamslist .abs-time {
+
+body.dark .ant-collapse {
+  background-color: #252525;
+  border: 0;
+}
+body.dark .ant-collapse > .ant-collapse-item {
+  border-bottom: 1px solid #2f2f2f;
+}
+body.dark .spanlink {
+  color: #48a7ff;
+}
+body.dark .ant-collapse-content {
+  background-color: #292929;
+  border-top: 0;
+}
+body.dark .logevent-header {
+  color: #e4e4e4;
+}
+body.dark .log-section > .ant-collapse {
+  border: 1px solid #313131;
+}
+body.dark .log-section header .last-refreshed,
+body.dark .logstream > .abs-time {
+  color: #969696;
+}
+body.dark .syntax-highlighter {
+  background: #252525 !important;
+}
+body.dark .ant-tabs-bar {
+  border-bottom: 1px solid #3e3e3e;
+}
+/* dark theme end */
+
+.ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.spanlink {
+  cursor: pointer;
+  color: #1890ff;
+}
+.spanlink:hover {
+  color: #40a9ff;
+}
+
+.ant-tabs {
+  margin: 10px;
+}
+.log-section {
+  margin: 10px;
+}
+.log-section header {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.log-section header .options {
+  text-align: right;
+}
+
+.log-section header .last-refreshed {
+  margin-left: 10px;
   font-size: 0.8em;
+  color: #8e8e8e;
+  opacity: 0.7;
+}
+
+.logstreamslist .logevent-longmessage {
+  margin-left: 25px;
+  padding: 10px 0;
+  color: #1f1f1f;
+  font-family: monaco, menlo, consolas, 'courier prime', courier, 'courier new',
+    monospace;
+  font-size: 0.95em;
+  word-wrap: break-word;
+}
+
+.logevent-header {
+  display: flex;
+  align-items: center;
+  color: #606060;
+}
+.logevent-shortmessage {
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: calc(100% - 260px);
+}
+
+.logevent-header .relative-time {
+  font-size: 0.9em;
+  width: 90px;
+  font-weight: bold;
+}
+.logevent-header .abs-time {
+  font-size: 0.9em;
+  width: 150px;
+}
+.logstream > .relative-time {
+  display: inline-block;
+  width: 110px;
+}
+.logstream > .abs-time {
+  font-size: 0.9em;
   color: #666;
-  line-height: 1;
-  display: block;
 }
 
 .logstreamslist .retry-message {
   text-align: center;
-  color: #8e8e8e;;
-  padding-top: 5px;
+  color: #8e8e8e;
+  font-style: italic;
+  opacity: 0.6;
 }
-.logstreamslist .retry-message .retry-link {
-  cursor: pointer;
-  color: #1890ff
-}
-.logstreamslist .retry-message .retry-link:hover {
-  color: #40a9ff
-}
-.logstreamslist .ant-collapse > .ant-collapse-item > .ant-collapse-header {
+.logstreamslist .retry-message-new {
+  margin-bottom: -5px;
   padding-top: 10px;
+}
+.logstreamslist .retry-message-old {
+  margin-top: -5px;
   padding-bottom: 10px;
+}
+.logstreamslist .retry-link {
+  padding-left: 5px;
+}
+
+.logstreamslist .ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 .logstream-header {
   display: inline-block;
 }
 .refresh-logstream {
-  padding: 15px
+  padding: 15px;
 }
 
 .ant-collapse-borderless > .ant-collapse-item:last-child {
@@ -68,6 +167,5 @@ body {
 
 .syntax-highlighter {
   margin: 5px;
-  font-size: 0.9em;
-  background: #fff!important;
+  background: #fff !important;
 }
