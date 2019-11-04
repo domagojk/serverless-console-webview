@@ -18,7 +18,7 @@ export class LogStream extends React.Component<{
     loadingNew?: boolean
     loadingOld?: boolean
     messages: {
-      time: string
+      timestamp: number
       messageShort: string
       messageLong: string
     }[]
@@ -36,7 +36,7 @@ export class LogStream extends React.Component<{
     this.setState({
       loaded: true,
       messages: logEvents.map((log, i) => ({
-        time: log.timestamp + i,
+        timestamp: log.timestamp,
         messageShort: log.message.slice(0, 500),
         messageLong: log.message
       }))
@@ -51,7 +51,7 @@ export class LogStream extends React.Component<{
       logGroup: this.props.logGroup,
       logStream: this.props.logStream
     })
-    console.log(logEvents)
+
     this.setState({
       loadingNew: false
     })
@@ -65,7 +65,7 @@ export class LogStream extends React.Component<{
       logGroup: this.props.logGroup,
       logStream: this.props.logStream
     })
-    console.log(logEvents)
+
     this.setState({
       loadingOld: false
     })
@@ -90,26 +90,28 @@ export class LogStream extends React.Component<{
           )}
         </div>,
         <Collapse key="collapse" bordered={false}>
-          {this.state.messages.map(message => (
-            <Panel
-              key={message.time}
-              header={
-                <div className="logevent-header">
-                  <span className="relative-time">
-                    {moment(message.time).fromNow()}
-                  </span>
-                  <span className="abs-time">
-                    {moment(message.time).format('lll')}
-                  </span>
-                  <span className="logevent-shortmessage">
-                    {message.messageShort}
-                  </span>
-                </div>
-              }
-            >
-              <LogEvent message={message.messageLong} />
-            </Panel>
-          ))}
+          {this.state.messages
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .map(message => (
+              <Panel
+                key={message.timestamp}
+                header={
+                  <div className="logevent-header">
+                    <span className="relative-time">
+                      {moment(message.timestamp).fromNow()}
+                    </span>
+                    <span className="abs-time">
+                      {moment(message.timestamp).format('lll')}
+                    </span>
+                    <span className="logevent-shortmessage">
+                      {message.messageShort}
+                    </span>
+                  </div>
+                }
+              >
+                <LogEvent message={message.messageLong} />
+              </Panel>
+            ))}
         </Collapse>,
         <div className="retry-message retry-message-new" key="retrynew">
           {this.state.loadingNew ? (
