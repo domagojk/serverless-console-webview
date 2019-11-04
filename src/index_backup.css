@@ -1,35 +1,61 @@
 body {
-  background-color: var(--vscode-editor-background);
-  color: var(--vscode-editor-foreground);
+  margin: 0;
   font-family: var(--vscode-font-family);
   font-weight: var(--vscode-font-weight);
-  background: var(--vscode-editor-background);
   font-size: var(--vscode-font-size);
-  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body,
-body body h1,
-body h2,
-body h3,
-body .ant-collapse > .ant-collapse-item > .ant-collapse-header,
-body .logstreamslist .logevent-longmessage,
-body .ant-tabs {
-  color: var(--vscode-editor-foreground);
+/* dark theme start */
+body.dark {
+  background-color: #1e1e1e;
 }
 
-.ant-collapse {
-  background-color: var(--vscode-editor-background);
-  border-color: var(--vscode-checkbox-border);
-}
-.ant-collapse > .ant-collapse-item {
-  border-bottom: 1px solid var(--vscode-checkbox-border);
+body.dark,
+body.dark body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark .ant-collapse > .ant-collapse-item > .ant-collapse-header,
+body.dark .logstreamslist .logevent-longmessage,
+body.dark .ant-tabs {
+  color: #f3f3f3;
 }
 
-.ant-collapse-content {
-  background-color: var(--vscode-editor-background);
-  border-top: 1px solid var(--vscode-checkbox-border)
+body.dark .ant-collapse {
+  background-color: #252525;
+  border: 0;
 }
+body.dark .ant-collapse > .ant-collapse-item {
+  border-bottom: 1px solid #2f2f2f;
+}
+body.dark .spanlink {
+  color: #48a7ff;
+}
+body.dark .ant-collapse-content {
+  background-color: #292929;
+  border-top: 0;
+}
+body.dark .logevent-shortmessage .event-tag {
+  background: #00487b;
+}
+body.dark .logevent-header {
+  color: #e4e4e4;
+}
+body.dark .log-section > .ant-collapse {
+  border: 1px solid #313131;
+}
+body.dark .log-section header .last-refreshed,
+body.dark .logstream > .abs-time {
+  color: #969696;
+}
+body.dark .syntax-highlighter {
+  background: #252525 !important;
+}
+body.dark .ant-tabs-bar {
+  border-bottom: 1px solid #3e3e3e;
+}
+/* dark theme end */
 
 .ant-collapse > .ant-collapse-item > .ant-collapse-header {
   padding-top: 8px;
@@ -64,14 +90,14 @@ body .ant-tabs {
 .log-section header .last-refreshed {
   margin-left: 10px;
   font-size: 0.8em;
-  color: var(--vscode-editor-foreground);
+  color: #8e8e8e;
   opacity: 0.7;
 }
 
 .logstreamslist .logevent-longmessage {
   margin-left: 25px;
   padding: 10px 0;
-  color: var(--vscode-editor-foreground);
+  color: #1f1f1f;
   font-family: monaco, menlo, consolas, 'courier prime', courier, 'courier new',
     monospace;
   font-size: 0.95em;
@@ -81,6 +107,7 @@ body .ant-tabs {
 .logevent-header {
   display: flex;
   align-items: center;
+  color: #606060;
 }
 .logevent-shortmessage {
   font-size: 0.9em;
@@ -90,8 +117,7 @@ body .ant-tabs {
   width: calc(100% - 260px);
 }
 .logevent-shortmessage .event-tag {
-  background: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
+  background: #bae7ff;
   padding: 4px;
   border-radius: 4px;
   font-size: 0.9em;
@@ -115,13 +141,12 @@ body .ant-tabs {
 }
 .logstream > .abs-time {
   font-size: 0.9em;
-  color: var(--vscode-editor-foreground);
-  opacity: 0.8;
+  color: #666;
 }
 
 .logstreamslist .retry-message {
   text-align: center;
-  color: var(--vscode-editor-foreground);
+  color: #8e8e8e;
   font-style: italic;
   opacity: 0.6;
 }
@@ -148,7 +173,7 @@ body .ant-tabs {
   padding: 15px;
 }
 
-.ant-collapse-borderless > .ant-collapse-item {
+.ant-collapse-borderless > .ant-collapse-item:last-child {
   border-bottom: none;
 }
 
