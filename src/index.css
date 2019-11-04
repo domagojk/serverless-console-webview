@@ -36,6 +36,9 @@ body.dark .ant-collapse-content {
   background-color: #292929;
   border-top: 0;
 }
+body.dark .logevent-shortmessage .event-tag {
+  background: #00487b;
+}
 body.dark .logevent-header {
   color: #e4e4e4;
 }
@@ -113,11 +116,18 @@ body.dark .ant-tabs-bar {
   text-overflow: ellipsis;
   width: calc(100% - 260px);
 }
+.logevent-shortmessage .event-tag {
+  background: #bae7ff;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  margin-right: 3px;
+}
 
 .logevent-header .relative-time {
   font-size: 0.9em;
   font-weight: bold;
-  padding-right: 15px;
+  width: 105px;
   white-space: nowrap;
 }
 .logevent-header .abs-time {

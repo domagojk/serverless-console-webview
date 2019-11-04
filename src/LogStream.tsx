@@ -3,6 +3,7 @@ import { getLogEvents } from './cwData'
 import { Collapse } from 'antd'
 import moment from 'moment'
 import { LogEvent } from './LogEvent'
+import { RelativeTime } from './RelativeTime'
 
 const { Panel } = Collapse
 
@@ -17,8 +18,11 @@ export class LogStream extends React.Component<{
     loaded: boolean
     loadingNew?: boolean
     loadingOld?: boolean
+    nextBackwardToken?: string
+    nextForwardToken?: string
     messages: {
       timestamp: number
+      key: string
       messageShort: string
       messageLong: string
     }[]
@@ -28,18 +32,26 @@ export class LogStream extends React.Component<{
   }
 
   async componentDidMount() {
-    const logEvents = await getLogEvents({
+    const {
+      logEvents,
+      nextBackwardToken,
+      nextForwardToken
+    } = await getLogEvents({
       logGroup: this.props.logGroup,
       logStream: this.props.logStream
     })
 
     this.setState({
       loaded: true,
-      messages: logEvents.map((log, i) => ({
-        timestamp: log.timestamp,
-        messageShort: log.message.slice(0, 500),
-        messageLong: log.message
-      }))
+      nextBackwardToken,
+      nextForwardToken,
+      messages: prepareMessagesArr(
+        logEvents.map((log, i) => ({
+          timestamp: log.timestamp,
+          messageShort: log.message.slice(0, 500),
+          messageLong: log.message
+        }))
+      )
     })
   }
 
@@ -47,13 +59,23 @@ export class LogStream extends React.Component<{
     this.setState({
       loadingNew: true
     })
-    const logEvents = await getLogEvents({
+    const { logEvents, nextForwardToken } = await getLogEvents({
       logGroup: this.props.logGroup,
-      logStream: this.props.logStream
+      logStream: this.props.logStream,
+      nextToken: this.state.nextForwardToken
     })
 
     this.setState({
-      loadingNew: false
+      loadingNew: false,
+      messages: prepareMessagesArr([
+        ...this.state.messages,
+        ...logEvents.map((log, i) => ({
+          timestamp: log.timestamp,
+          messageShort: log.message.slice(0, 500),
+          messageLong: log.message
+        }))
+      ]),
+      nextForwardToken
     })
   }
 
@@ -61,13 +83,23 @@ export class LogStream extends React.Component<{
     this.setState({
       loadingOld: true
     })
-    const logEvents = await getLogEvents({
+    const { logEvents, nextBackwardToken } = await getLogEvents({
       logGroup: this.props.logGroup,
-      logStream: this.props.logStream
+      logStream: this.props.logStream,
+      nextToken: this.state.nextBackwardToken
     })
 
     this.setState({
-      loadingOld: false
+      loadingOld: false,
+      messages: prepareMessagesArr([
+        ...logEvents.map((log, i) => ({
+          timestamp: log.timestamp,
+          messageShort: log.message.slice(0, 500),
+          messageLong: log.message
+        })),
+        ...this.state.messages
+      ]),
+      nextBackwardToken
     })
   }
 
@@ -90,28 +122,56 @@ export class LogStream extends React.Component<{
           )}
         </div>,
         <Collapse key="collapse" bordered={false}>
-          {this.state.messages
-            .sort((a, b) => a.timestamp - b.timestamp)
-            .map(message => (
+          {this.state.messages.map(message => {
+            let shortMessageMatched: string[] = []
+            if (message.messageShort.startsWith('REPORT RequestId:')) {
+              const matchDuration = message.messageShort.match(
+                /Duration: (.*?) ms/
+              )
+              const matchMaxMemory = message.messageShort.match(
+                /Max Memory Used: (.*?) MB/
+              )
+              const matchInitDur = message.messageShort.match(
+                /Init Duration: (.*?) ms/
+              )
+
+              if (matchInitDur) {
+                shortMessageMatched.push(`init: ${matchInitDur[1]} ms`)
+              }
+              if (matchDuration) {
+                shortMessageMatched.push(`${matchDuration[1]} ms`)
+              }
+              if (matchMaxMemory) {
+                shortMessageMatched.push(`${matchMaxMemory[1]} MB`)
+              }
+              
+            }
+            return (
               <Panel
-                key={message.timestamp}
+                key={message.key}
                 header={
                   <div className="logevent-header">
-                    <span className="relative-time">
-                      {moment(message.timestamp).fromNow()}
-                    </span>
+                    <RelativeTime
+                      className="relative-time"
+                      time={message.timestamp}
+                    />
                     <span className="abs-time">
                       {moment(message.timestamp).format('lll')}
                     </span>
                     <span className="logevent-shortmessage">
-                      {message.messageShort}
+                      {shortMessageMatched.length
+                        ? shortMessageMatched.map(tag => (
+                            <span className="event-tag">{tag}</span>
+                          ))
+                        : message.messageShort}
                     </span>
                   </div>
                 }
               >
                 <LogEvent message={message.messageLong} />
               </Panel>
-            ))}
+            )
+          })}
         </Collapse>,
         <div className="retry-message retry-message-new" key="retrynew">
           {this.state.loadingNew ? (
@@ -133,4 +193,29 @@ export class LogStream extends React.Component<{
       <div className="retry-message">loading new events...</div>
     )
   }
+}
+
+function prepareMessagesArr(
+  messages: {
+    timestamp: number
+    key?: string
+    messageShort: string
+    messageLong: string
+  }[]
+): {
+  timestamp: number
+  key: string
+  messageShort: string
+  messageLong: string
+}[] {
+  return (
+    messages
+      //.sort((a, b) => b.timestamp - a.timestamp)
+      .map((message, i) => {
+        return {
+          ...message,
+          key: `${i}-${message.timestamp}`
+        }
+      })
+  )
 }

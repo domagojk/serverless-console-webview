@@ -8,6 +8,12 @@ import { Tabs } from 'antd'
 
 const { TabPane } = Tabs
 
+declare global {
+  interface Window {
+    slsConsole: any
+  }
+}
+
 ReactDOM.render(
   <Tabs
     animated={false}

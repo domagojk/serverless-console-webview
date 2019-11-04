@@ -3,6 +3,7 @@ import { getLogStreams } from './cwData'
 import { Collapse } from 'antd'
 import moment from 'moment'
 import { LogStream } from './LogStream'
+import { RelativeTime } from './RelativeTime'
 
 const { Panel } = Collapse
 
@@ -64,57 +65,43 @@ export class LogStreamList extends React.Component {
                 Refresh
               </span>
               {this.state.lastRefreshed !== 0 && (
-                <LastRefreshed time={this.state.lastRefreshed} />
+                <div className="last-refreshed">
+                  last updated <RelativeTime time={this.state.lastRefreshed} />
+                </div>
               )}
             </span>
           )}
         </header>
         {this.state.loaded ? (
           <Collapse className="logstreamslist">
-            {this.state.logStreams.map(logStream => (
-              <Panel
-                header={
-                  <div className="logstream">
-                    <span className="relative-time">
-                      {moment(logStream.lastEventTimestamp).fromNow()}
-                    </span>
-                    <span className="abs-time">
-                      {moment(logStream.lastEventTimestamp).format('lll')}
-                    </span>
-                  </div>
-                }
-                key={logStream.arn}
-              >
-                <LogStream
-                  logGroup=""
-                  logStream={logStream.logStreamName}
-                  onRetry={console.log}
-                />
-              </Panel>
-            ))}
+            {this.state.logStreams
+              .sort((a, b) => b.lastEventTimestamp - a.lastEventTimestamp)
+              .map(logStream => (
+                <Panel
+                  header={
+                    <div className="logstream">
+                      <RelativeTime
+                        className="relative-time"
+                        time={logStream.lastEventTimestamp}
+                      />
+                      <span className="abs-time">
+                        {moment(logStream.lastEventTimestamp).format('lll')}
+                      </span>
+                    </div>
+                  }
+                  key={logStream.arn}
+                >
+                  <LogStream
+                    logGroup=""
+                    logStream={logStream.logStreamName}
+                    onRetry={console.log}
+                  />
+                </Panel>
+              ))}
           </Collapse>
         ) : (
           <div>loading</div>
         )}
-      </div>
-    )
-  }
-}
-
-class LastRefreshed extends React.Component<{ time: number }> {
-  componentDidMount() {
-    setInterval(
-      () =>
-        this.setState({
-          interval: Date.now()
-        }),
-      10000
-    )
-  }
-  render() {
-    return (
-      <div className="last-refreshed">
-        last updated {moment(this.props.time).fromNow()}
       </div>
     )
   }

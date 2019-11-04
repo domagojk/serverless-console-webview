@@ -30,9 +30,7 @@ export class LogEvent extends React.Component<{ message: string }> {
             language="json"
             showLineNumbers
             lineNumberStyle={{ opacity: 0.4 }}
-            style={
-              document.body.className.includes('dark') ? monokaiSublime : github
-            }
+            style={window.slsConsole.darkTheme ? monokaiSublime : github}
           >
             {splitted[1]}
           </SyntaxHighlighter>

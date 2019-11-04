@@ -36,27 +36,35 @@ export function getLogStreams(logGroup: string) {
 
 export function getLogEvents(params: {
   logStream: string
-  logGroup: string
-}): Promise<
-  {
+  logGroup: string,
+  nextToken?: string
+}): Promise<{
+  logEvents: {
     ingestionTime: string
     message: string
     timestamp: number
   }[]
-> {
+  nextForwardToken: string
+  nextBackwardToken: string
+}> {
   return new Promise(resolve => {
     const messageId = Math.random()
     vscode.postMessage({
       command: 'getLogEvents',
       messageId,
       payload: {
+        nextToken: params.nextToken,
         logGroup: params.logGroup,
         logStream: params.logStream
       }
     })
 
     subscriptions[messageId] = (message: any) => {
-      resolve(message.logEvents)
+      resolve({
+        nextBackwardToken: message.nextBackwardToken,
+        nextForwardToken: message.nextForwardToken,
+        logEvents: message.logEvents
+      })
     }
   })
 }
