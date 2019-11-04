@@ -116,16 +116,18 @@ body.dark .ant-tabs-bar {
 
 .logevent-header .relative-time {
   font-size: 0.9em;
-  width: 90px;
   font-weight: bold;
+  padding-right: 15px;
+  white-space: nowrap;
 }
 .logevent-header .abs-time {
   font-size: 0.9em;
-  width: 150px;
+  padding-right: 15px;
+  white-space: nowrap;
 }
 .logstream > .relative-time {
   display: inline-block;
-  width: 110px;
+  width: 120px;
 }
 .logstream > .abs-time {
   font-size: 0.9em;
