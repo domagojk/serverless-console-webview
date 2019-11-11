@@ -198,3 +198,8 @@ code span.hljs-literal {
 code .react-syntax-highlighter-line-number {
   color: var(--vscode-editorLineNumber-foreground);
 }
+
+.loadmore {
+  margin: 10px;
+  margin-left: 20px;
+}

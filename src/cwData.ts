@@ -19,14 +19,16 @@ window.addEventListener('message', event => {
 })
 
 export function getLogStreams(
-  logGroupName: string
-): Promise<{ logStreams: any[]; error?: string }> {
+  logGroupName: string,
+  nextToken?: string
+): Promise<{ logStreams: any[]; error?: string; nextToken?: string }> {
   return new Promise(resolve => {
     const messageId = Math.random()
     vscode.postMessage({
       command: 'getLogStreams',
       messageId,
       payload: {
+        nextToken,
         logGroupName
       }
     })
@@ -39,6 +41,7 @@ export function getLogStreams(
         })
       } else {
         resolve({
+          nextToken: message.nextToken,
           logStreams: message.logStreams,
           error: message.error
         })

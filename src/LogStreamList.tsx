@@ -10,9 +10,12 @@ const { Panel } = Collapse
 export class LogStreamList extends React.Component<{ tab: any }> {
   state: {
     refreshInProgress: boolean
+    loadMoreInProgress?: boolean
     lastRefreshed: number
     loaded: boolean
     error?: string
+    currentToken?: string
+    nextToken?: string
     logStreams: {
       creationTime: number
       firstEventTimestamp: number
@@ -31,12 +34,38 @@ export class LogStreamList extends React.Component<{ tab: any }> {
   }
 
   async componentDidMount() {
-    const { logStreams, error } = await getLogStreams(this.props.tab.logs)
+    const { logStreams, nextToken, error } = await getLogStreams(
+      this.props.tab.logs
+    )
+
     this.setState({
       error,
       loaded: true,
       lastRefreshed: Date.now(),
-      logStreams
+      logStreams,
+      nextToken
+    })
+  }
+
+  async onLoadMore() {
+    this.setState({
+      loadMoreInProgress: true
+    })
+
+    const { logStreams, nextToken, error } = await getLogStreams(
+      this.props.tab.logs,
+      this.state.nextToken
+    )
+
+    const oldStreams = this.state.logStreams.filter(
+      logStream => !logStreams.find(l => l.arn === logStream.arn)
+    )
+
+    this.setState({
+      error,
+      loadMoreInProgress: false,
+      logStreams: [...oldStreams, ...logStreams],
+      nextToken
     })
   }
 
@@ -48,10 +77,14 @@ export class LogStreamList extends React.Component<{ tab: any }> {
 
     const { logStreams, error } = await getLogStreams(this.props.tab.logs)
 
+    const oldStreams = this.state.logStreams.filter(
+      logStream => !logStreams.find(l => l.arn === logStream.arn)
+    )
+
     this.setState({
       error,
       refreshInProgress: false,
-      logStreams
+      logStreams: [...oldStreams, ...logStreams]
     })
   }
 
@@ -80,37 +113,54 @@ export class LogStreamList extends React.Component<{ tab: any }> {
             </span>
           )}
         </header>
+
         {this.state.loaded ? (
-          <Collapse className="logstreamslist">
-            {this.state.error ? (
-              <div className="foreground-color">{this.state.error}</div>
-            ) : (
-              this.state.logStreams
-                .sort((a, b) => b.lastEventTimestamp - a.lastEventTimestamp)
-                .map(logStream => (
-                  <Panel
-                    header={
-                      <div className="logstream">
-                        <RelativeTime
-                          className="relative-time"
-                          time={logStream.lastEventTimestamp}
-                        />
-                        <span className="abs-time">
-                          {moment(logStream.lastEventTimestamp).format('lll')}
-                        </span>
-                      </div>
-                    }
-                    key={logStream.arn}
+          <div>
+            <Collapse className="logstreamslist">
+              {this.state.error ? (
+                <div className="foreground-color">{this.state.error}</div>
+              ) : (
+                this.state.logStreams
+                  .sort((a, b) => b.lastEventTimestamp - a.lastEventTimestamp)
+                  .map(logStream => (
+                    <Panel
+                      header={
+                        <div className="logstream">
+                          <RelativeTime
+                            className="relative-time"
+                            time={logStream.lastEventTimestamp}
+                          />
+                          <span className="abs-time">
+                            {moment(logStream.lastEventTimestamp).format('lll')}
+                          </span>
+                        </div>
+                      }
+                      key={logStream.arn}
+                    >
+                      <LogStream
+                        logGroup=""
+                        logStream={logStream.logStreamName}
+                        onRetry={console.log}
+                      />
+                    </Panel>
+                  ))
+              )}
+            </Collapse>
+            {this.state.nextToken && (
+              <div className=" loadmore">
+                {this.state.loadMoreInProgress ? (
+                  <span>loading...</span>
+                ) : (
+                  <span
+                    className="spanlink"
+                    onClick={this.onLoadMore.bind(this)}
                   >
-                    <LogStream
-                      logGroup=""
-                      logStream={logStream.logStreamName}
-                      onRetry={console.log}
-                    />
-                  </Panel>
-                ))
+                    Load more
+                  </span>
+                )}
+              </div>
             )}
-          </Collapse>
+          </div>
         ) : (
           <div>loading</div>
         )}
