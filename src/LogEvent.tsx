@@ -1,9 +1,5 @@
 import React from 'react'
 import SyntaxHighlighter from 'react-syntax-highlighter'
-import {
-  github,
-  monokaiSublime
-} from 'react-syntax-highlighter/dist/esm/styles/hljs'
 
 export class LogEvent extends React.Component<{ message: string }> {
   state = {
@@ -27,10 +23,9 @@ export class LogEvent extends React.Component<{ message: string }> {
           <div>{splitted[0]}</div>
           <SyntaxHighlighter
             className="syntax-highlighter"
+            useInlineStyles={false}
             language="json"
             showLineNumbers
-            lineNumberStyle={{ opacity: 0.4 }}
-            style={window.slsConsole.darkTheme ? monokaiSublime : github}
           >
             {splitted[1]}
           </SyntaxHighlighter>

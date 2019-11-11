@@ -7,11 +7,12 @@ import { RelativeTime } from './RelativeTime'
 
 const { Panel } = Collapse
 
-export class LogStreamList extends React.Component {
+export class LogStreamList extends React.Component<{ tab: any }> {
   state: {
     refreshInProgress: boolean
     lastRefreshed: number
     loaded: boolean
+    error?: string
     logStreams: {
       creationTime: number
       firstEventTimestamp: number
@@ -30,8 +31,9 @@ export class LogStreamList extends React.Component {
   }
 
   async componentDidMount() {
-    const logStreams = await getLogStreams('')
+    const { logStreams, error } = await getLogStreams(this.props.tab.logs)
     this.setState({
+      error,
       loaded: true,
       lastRefreshed: Date.now(),
       logStreams
@@ -44,9 +46,10 @@ export class LogStreamList extends React.Component {
       lastRefreshed: Date.now()
     })
 
-    const logStreams = await getLogStreams('')
+    const { logStreams, error } = await getLogStreams(this.props.tab.logs)
 
     this.setState({
+      error,
       refreshInProgress: false,
       logStreams
     })
@@ -56,7 +59,12 @@ export class LogStreamList extends React.Component {
     return (
       <div className="log-section">
         <header>
-          <h2>Logs</h2>
+          <h2>
+            Logs{' '}
+            <span className="foreground-color small-message">
+              {this.props.tab.logs}
+            </span>
+          </h2>
           {this.state.refreshInProgress ? (
             'loading...'
           ) : (
@@ -74,30 +82,34 @@ export class LogStreamList extends React.Component {
         </header>
         {this.state.loaded ? (
           <Collapse className="logstreamslist">
-            {this.state.logStreams
-              .sort((a, b) => b.lastEventTimestamp - a.lastEventTimestamp)
-              .map(logStream => (
-                <Panel
-                  header={
-                    <div className="logstream">
-                      <RelativeTime
-                        className="relative-time"
-                        time={logStream.lastEventTimestamp}
-                      />
-                      <span className="abs-time">
-                        {moment(logStream.lastEventTimestamp).format('lll')}
-                      </span>
-                    </div>
-                  }
-                  key={logStream.arn}
-                >
-                  <LogStream
-                    logGroup=""
-                    logStream={logStream.logStreamName}
-                    onRetry={console.log}
-                  />
-                </Panel>
-              ))}
+            {this.state.error ? (
+              <div className="foreground-color">{this.state.error}</div>
+            ) : (
+              this.state.logStreams
+                .sort((a, b) => b.lastEventTimestamp - a.lastEventTimestamp)
+                .map(logStream => (
+                  <Panel
+                    header={
+                      <div className="logstream">
+                        <RelativeTime
+                          className="relative-time"
+                          time={logStream.lastEventTimestamp}
+                        />
+                        <span className="abs-time">
+                          {moment(logStream.lastEventTimestamp).format('lll')}
+                        </span>
+                      </div>
+                    }
+                    key={logStream.arn}
+                  >
+                    <LogStream
+                      logGroup=""
+                      logStream={logStream.logStreamName}
+                      onRetry={console.log}
+                    />
+                  </Panel>
+                ))
+            )}
           </Collapse>
         ) : (
           <div>loading</div>

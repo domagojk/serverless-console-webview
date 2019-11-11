@@ -10,29 +10,20 @@ const { TabPane } = Tabs
 
 declare global {
   interface Window {
-    slsConsole: any
+    devData: any
+  }
+  interface Document {
+    vscodeData: any
   }
 }
 
 ReactDOM.render(
-  <Tabs
-    animated={false}
-    tabBarExtraContent={
-      <span
-        className="spanlink"
-        style={{ marginRight: 10 }}
-        onClick={console.log}
-      >
-        Add stage
-      </span>
-    }
-  >
-    <TabPane tab="dev" key="dev">
-      <LogStreamList />
-    </TabPane>
-    <TabPane tab="prod" key="prod">
-      <LogStreamList />
-    </TabPane>
+  <Tabs animated={false}>
+    {document.vscodeData.tabs.map((tab: any) => (
+      <TabPane tab={tab.title} key={tab.title}>
+        <LogStreamList tab={tab} />
+      </TabPane>
+    ))}
   </Tabs>,
   document.getElementById('root')
 )

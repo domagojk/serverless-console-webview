@@ -1,6 +1,7 @@
 let vscode = {
   postMessage: console.log
 }
+
 try {
   // @ts-ignore
   vscode = acquireVsCodeApi()
@@ -17,26 +18,38 @@ window.addEventListener('message', event => {
   }
 })
 
-export function getLogStreams(logGroup: string) {
+export function getLogStreams(
+  logGroupName: string
+): Promise<{ logStreams: any[]; error?: string }> {
   return new Promise(resolve => {
     const messageId = Math.random()
     vscode.postMessage({
       command: 'getLogStreams',
       messageId,
       payload: {
-        logGroup
+        logGroupName
       }
     })
 
     subscriptions[messageId] = (message: any) => {
-      resolve(message.logStreams)
+      if (message.error) {
+        resolve({
+          logStreams: [],
+          error: message.error
+        })
+      } else {
+        resolve({
+          logStreams: message.logStreams,
+          error: message.error
+        })
+      }
     }
   })
 }
 
 export function getLogEvents(params: {
   logStream: string
-  logGroup: string,
+  logGroup: string
   nextToken?: string
 }): Promise<{
   logEvents: {
