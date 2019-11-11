@@ -21,6 +21,7 @@ export class LogStreamList extends React.Component<{ tab: any }> {
       firstEventTimestamp: number
       lastEventTimestamp: number
       lastIngestionTime: number
+      sortByTimestamp: number
       storedBytes: number
       logStreamName: string
       uploadSequenceToken: string
@@ -121,26 +122,25 @@ export class LogStreamList extends React.Component<{ tab: any }> {
                 <div className="foreground-color">{this.state.error}</div>
               ) : (
                 this.state.logStreams
-                  .sort((a, b) => b.lastEventTimestamp - a.lastEventTimestamp)
+                  .sort((a, b) => b.sortByTimestamp - a.sortByTimestamp)
                   .map(logStream => (
                     <Panel
                       header={
                         <div className="logstream">
                           <RelativeTime
                             className="relative-time"
-                            time={logStream.lastEventTimestamp}
+                            time={logStream.sortByTimestamp}
                           />
                           <span className="abs-time">
-                            {moment(logStream.lastEventTimestamp).format('lll')}
+                            {moment(logStream.sortByTimestamp).format('lll')}
                           </span>
                         </div>
                       }
                       key={logStream.arn}
                     >
                       <LogStream
-                        logGroup=""
+                        logGroup={this.props.tab.logs}
                         logStream={logStream.logStreamName}
-                        onRetry={console.log}
                       />
                     </Panel>
                   ))

@@ -10,7 +10,6 @@ const { Panel } = Collapse
 export class LogStream extends React.Component<{
   logStream: string
   logGroup: string
-  onRetry: any
   loadingNew?: boolean
   loadingOld?: boolean
 }> {
