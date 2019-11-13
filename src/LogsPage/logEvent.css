@@ -1,0 +1,21 @@
+pre.hljs {
+  margin: 10px 5px;
+}
+code {
+  color: var(--vscode-editor-foreground);
+}
+code span.hljs-attr {
+  color: var(--vscode-gitDecoration-submoduleResourceForeground);
+}
+code span.hljs-string {
+  color: var(--vscode-textPreformat-foreground);
+}
+code span.hljs-number {
+  color: var(--vscode-gitDecoration-untrackedResourceForeground);
+}
+code span.hljs-literal {
+  color: var(--vscode-breadcrumb-foreground);
+}
+code .react-syntax-highlighter-line-number {
+  color: var(--vscode-editorLineNumber-foreground);
+}

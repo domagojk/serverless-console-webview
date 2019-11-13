@@ -3,10 +3,7 @@ import './index.css'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import * as serviceWorker from './serviceWorker'
-import { LogStreamList } from './LogStreamList'
-import { Tabs } from 'antd'
-
-const { TabPane } = Tabs
+import { LogsIndex } from './LogsPage/LogsPage'
 
 declare global {
   interface Window {
@@ -17,16 +14,7 @@ declare global {
   }
 }
 
-ReactDOM.render(
-  <Tabs animated={false}>
-    {document.vscodeData.tabs.map((tab: any) => (
-      <TabPane tab={tab.title} key={tab.title}>
-        <LogStreamList tab={tab} />
-      </TabPane>
-    ))}
-  </Tabs>,
-  document.getElementById('root')
-)
+ReactDOM.render(<LogsIndex />, document.getElementById('root'))
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

@@ -1,0 +1,15 @@
+.overview-section {
+  margin: 10px;
+}
+.overview-content {
+  padding: 5px;
+}
+.overview-content .ant-descriptions-item-label {
+  color: var(--vscode-editor-foreground);
+  font-size: 0.8em;
+  opacity: 0.5;
+}
+.overview-content .ant-descriptions-item-content {
+  color: var(--vscode-editor-foreground);
+  font-size: 0.8em;
+}

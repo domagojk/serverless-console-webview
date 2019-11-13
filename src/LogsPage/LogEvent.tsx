@@ -1,4 +1,5 @@
 import React from 'react'
+import './logEvent.css'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 
 export class LogEvent extends React.Component<{ message: string }> {

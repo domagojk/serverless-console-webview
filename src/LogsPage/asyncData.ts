@@ -1,3 +1,15 @@
+export type LogStreamData = {
+  creationTime: number
+  firstEventTimestamp: number
+  lastEventTimestamp: number
+  lastIngestionTime: number
+  sortByTimestamp: number
+  storedBytes: number
+  logStreamName: string
+  uploadSequenceToken: string
+  arn: string
+}
+
 let vscode = {
   postMessage: console.log
 }
@@ -17,6 +29,34 @@ window.addEventListener('message', event => {
     delete subscriptions[message.messageId]
   }
 })
+
+export function getLambdaOverview(
+  fnName: string
+): Promise<{ overviewProps: any; error?: string }> {
+  return new Promise(resolve => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'getLambdaOverview',
+      messageId,
+      payload: {
+        fnName
+      }
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        resolve({
+          overviewProps: {},
+          error: message.error
+        })
+      } else {
+        resolve({
+          overviewProps: message
+        })
+      }
+    }
+  })
+}
 
 export function getLogStreams(
   logGroupName: string,
@@ -42,8 +82,7 @@ export function getLogStreams(
       } else {
         resolve({
           nextToken: message.nextToken,
-          logStreams: message.logStreams,
-          error: message.error
+          logStreams: message.logStreams
         })
       }
     }
