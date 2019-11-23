@@ -1,10 +1,27 @@
 import React from 'react'
+import Mark from 'mark.js'
 import './logEvent.css'
-import SyntaxHighlighter from 'react-syntax-highlighter'
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter'
+import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json'
+import copy from 'copy-to-clipboard'
+import { Button } from 'antd'
 
-export class LogEvent extends React.Component<{ message: string }> {
+SyntaxHighlighter.registerLanguage('json', json)
+
+export class LogEvent extends React.Component<{
+  message: string
+  search: string
+}> {
   state = {
+    copyStr: 'opy JSON to clipboard',
+    searched: false,
     loaded: false
+  }
+  myRef: any
+
+  constructor(props) {
+    super(props)
+    this.myRef = React.createRef()
   }
 
   componentDidMount() {
@@ -15,6 +32,28 @@ export class LogEvent extends React.Component<{ message: string }> {
     }, 0)
   }
 
+  componentDidUpdate() {
+    if (this.props.search) {
+      if (this.state.searched === false) {
+        this.setState({
+          searched: true
+        })
+      }
+      var instance = new Mark(this.myRef.current)
+      instance.unmark({
+        done: () => {
+          instance.mark(this.props.search, {
+            acrossElements: true,
+            separateWordSearch: false
+          })
+        }
+      })
+    } else if (this.state.searched) {
+      var instance = new Mark(this.myRef.current)
+      instance.unmark()
+    }
+  }
+
   renderWithJson(content: string) {
     const splitted = extractJSON(content)
 
@@ -22,14 +61,36 @@ export class LogEvent extends React.Component<{ message: string }> {
       return (
         <div className="logevent-longmessage">
           <div>{splitted[0]}</div>
-          <SyntaxHighlighter
-            className="syntax-highlighter"
-            useInlineStyles={false}
-            language="json"
-            showLineNumbers
-          >
-            {splitted[1]}
-          </SyntaxHighlighter>
+          <div className="code-wrapper">
+            <Button
+              size="small"
+              onClick={e => {
+                e.currentTarget.blur()
+
+                copy(splitted[1])
+                this.setState({
+                  copyStr: 'copied'
+                })
+                setTimeout(() => {
+                  this.setState({
+                    copyStr: 'opy JSON to clipboard'
+                  })
+                }, 1000)
+              }}
+            >
+              {this.state.copyStr}
+            </Button>
+
+            <SyntaxHighlighter
+              className="syntax-highlighter"
+              useInlineStyles={false}
+              language="json"
+              showLineNumbers
+            >
+              {splitted[1]}
+            </SyntaxHighlighter>
+          </div>
+
           <div>{splitted[2]}</div>
         </div>
       )
@@ -38,10 +99,14 @@ export class LogEvent extends React.Component<{ message: string }> {
   }
 
   render() {
-    return this.state.loaded ? (
-      this.renderWithJson(this.props.message)
-    ) : (
-      <div>loading</div>
+    return (
+      <div ref={this.myRef}>
+        {this.state.loaded ? (
+          this.renderWithJson(this.props.message)
+        ) : (
+          <div>loading</div>
+        )}
+      </div>
     )
   }
 }

@@ -1,5 +1,22 @@
+.code-wrapper {
+  position: relative;
+}
+.code-wrapper button {
+  position: absolute;
+  right: 35px;
+  top: 5px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  margin-right: 3px;
+  border: 0;
+  font-family: var(--vscode-font-family);
+}
 pre.hljs {
   margin: 10px 5px;
+  max-height: 350px;
 }
 code {
   color: var(--vscode-editor-foreground);

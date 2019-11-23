@@ -98,7 +98,7 @@
   padding: 4px;
   border-radius: 4px;
   font-size: 0.9em;
-  margin-right: 3px;
+  margin-right: 5px;
 }
 
 .logevent-header .relative-time {
@@ -155,4 +155,40 @@
 .loadmore {
   margin: 10px;
   margin-left: 20px;
+}
+
+.logstream-options {
+  padding-left: 15px;
+  opacity: 0.6;
+}
+.logstream-options .ant-checkbox-wrapper {
+  color: var(--vscode-editor-foreground);
+  font-size: 0.8em;
+}
+.logstream-options .ant-input-search {
+  margin-right: 15px;
+  width: 150px;
+}
+.logstream-options .ant-input-search i {
+  color: var(--vscode-editor-foreground);
+}
+.logstream-options input {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-checkbox-border);
+  border-radius: 4px;
+  font-size: 0.8em;
+  outline: none;
+}
+mark {
+  padding: 0;
+  background: #edf100;
+  color: #000
+}
+.event-tag.matches {
+  background: #edf100;
+  color: #000
+}
+.blurforsearch {
+  opacity: 0.3
 }

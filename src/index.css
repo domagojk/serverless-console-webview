@@ -18,6 +18,10 @@ body .ant-tabs {
   color: var(--vscode-editor-foreground);
 }
 
+::-webkit-scrollbar-corner {
+  background-color: var(--vscode-editor-background);
+}
+
 body h2 {
   font-size: 1.4em;
 }
