@@ -13,7 +13,7 @@ export class LogEvent extends React.Component<{
   search: string
 }> {
   state = {
-    copyStr: 'opy JSON to clipboard',
+    copyStr: 'copy JSON to clipboard',
     searched: false,
     loaded: false
   }
@@ -73,7 +73,7 @@ export class LogEvent extends React.Component<{
                 })
                 setTimeout(() => {
                   this.setState({
-                    copyStr: 'opy JSON to clipboard'
+                    copyStr: 'copy JSON to clipboard'
                   })
                 }, 1000)
               }}
