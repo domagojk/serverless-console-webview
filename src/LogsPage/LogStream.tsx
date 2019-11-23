@@ -16,7 +16,7 @@ export class LogStream extends React.Component<{
   state: {
     loaded: boolean
     search: string
-    groupMessages: boolean
+    groupPerRequest: boolean
     loadingNew?: boolean
     loadingOld?: boolean
     nextBackwardToken?: string
@@ -38,7 +38,7 @@ export class LogStream extends React.Component<{
     }[]
   } = {
     search: '',
-    groupMessages: true,
+    groupPerRequest: document.vscodeData.groupPerRequest,
     loaded: false,
     preparedMessages: [],
     messages: []
@@ -69,7 +69,7 @@ export class LogStream extends React.Component<{
           messageShort: log.message.slice(0, 500),
           messageLong: log.message
         })),
-        this.state.groupMessages,
+        this.state.groupPerRequest,
         this.state.search
       )
     })
@@ -104,7 +104,7 @@ export class LogStream extends React.Component<{
             messageLong: log.message
           }))
         ],
-        this.state.groupMessages,
+        this.state.groupPerRequest,
         this.state.search
       ),
       nextForwardToken
@@ -140,7 +140,7 @@ export class LogStream extends React.Component<{
           })),
           ...this.state.messages
         ],
-        this.state.groupMessages,
+        this.state.groupPerRequest,
         this.state.search
       ),
       nextBackwardToken
@@ -157,7 +157,7 @@ export class LogStream extends React.Component<{
                 search: e.target.value,
                 preparedMessages: prepareMessagesArr(
                   this.state.messages,
-                  this.state.groupMessages,
+                  this.state.groupPerRequest,
                   e.target.value
                 )
               })
@@ -168,10 +168,10 @@ export class LogStream extends React.Component<{
             size="small"
           />
           <Checkbox
-            checked={this.state.groupMessages}
+            checked={this.state.groupPerRequest}
             onChange={e => {
               this.setState({
-                groupMessages: e.target.checked,
+                groupPerRequest: e.target.checked,
                 preparedMessages: prepareMessagesArr(
                   this.state.messages,
                   e.target.checked,
