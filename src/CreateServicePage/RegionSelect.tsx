@@ -2,12 +2,12 @@ import React from 'react'
 import { Select } from 'antd'
 const { Option } = Select
 
-export function RegionSelect(props: { region: string; setRegion: any }) {
+export function RegionSelect(props: { region: string; setRegion: any, style?: any }) {
   return (
     <Select
       showSearch
       defaultValue={props.region}
-      style={{ width: '100%' }}
+      style={props.style || { width: '100%' }}
       onChange={props.setRegion}
       optionFilterProp="children"
       filterOption={(input, option) => {

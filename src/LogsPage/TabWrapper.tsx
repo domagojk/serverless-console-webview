@@ -24,13 +24,17 @@ export class TabWrapper extends React.Component<{ tab: any }> {
   }
 
   async componentDidMount() {
-    const { logStreams, nextToken, error } = await getLogStreams(
-      this.props.tab.logs
-    )
+    const { logStreams, nextToken, error } = await getLogStreams({
+      logGroupName: this.props.tab.logs,
+      region: this.props.tab.region
+    })
 
     let overviewProps = {}
     if (this.props.tab.lambda) {
-      const res = await getLambdaOverview(this.props.tab.lambda)
+      const res = await getLambdaOverview({
+        fnName: this.props.tab.lambda,
+        region: this.props.tab.region
+      })
       overviewProps = res.overviewProps
     }
 
@@ -48,7 +52,10 @@ export class TabWrapper extends React.Component<{ tab: any }> {
       refreshInProgres: true
     })
 
-    const { logStreams, error } = await getLogStreams(this.props.tab.logs)
+    const { logStreams, error } = await getLogStreams({
+      logGroupName: this.props.tab.logs,
+      region: this.props.tab.region
+    })
 
     const oldStreams = this.state.logStreams.filter(
       logStream => !logStreams.find(l => l.arn === logStream.arn)
@@ -56,7 +63,10 @@ export class TabWrapper extends React.Component<{ tab: any }> {
 
     let overviewProps = {}
     if (this.props.tab.lambda) {
-      const res = await getLambdaOverview(this.props.tab.lambda)
+      const res = await getLambdaOverview({
+        fnName: this.props.tab.lambda,
+        region: this.props.tab.region
+      })
       overviewProps = res.overviewProps
     }
 
@@ -74,10 +84,11 @@ export class TabWrapper extends React.Component<{ tab: any }> {
       loadMoreInProgress: true
     })
 
-    const { logStreams, nextToken, error } = await getLogStreams(
-      this.props.tab.logs,
-      this.state.nextToken
-    )
+    const { logStreams, nextToken, error } = await getLogStreams({
+      logGroupName: this.props.tab.logs,
+      region: this.props.tab.region,
+      nextToken: this.state.nextToken
+    })
 
     const oldStreams = this.state.logStreams.filter(
       logStream => !logStreams.find(l => l.arn === logStream.arn)

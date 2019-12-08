@@ -30,16 +30,21 @@ window.addEventListener('message', event => {
   }
 })
 
-export function getLambdaOverview(
+export function getLambdaOverview({
+  fnName,
+  region
+}: {
   fnName: string
-): Promise<{ overviewProps: any; error?: string }> {
+  region?: string
+}): Promise<{ overviewProps: any; error?: string }> {
   return new Promise(resolve => {
     const messageId = Math.random()
     vscode.postMessage({
       command: 'getLambdaOverview',
       messageId,
       payload: {
-        fnName
+        fnName,
+        region
       }
     })
 
@@ -58,10 +63,15 @@ export function getLambdaOverview(
   })
 }
 
-export function getLogStreams(
-  logGroupName: string,
-  nextToken?: string
-): Promise<{ logStreams: any[]; error?: string; nextToken?: string }> {
+export function getLogStreams({
+	logGroupName,
+  nextToken,
+  region
+}: {
+	logGroupName: string
+	nextToken?: string
+	region?: string
+}): Promise<{ logStreams: any[]; error?: string; nextToken?: string }> {
   return new Promise(resolve => {
     const messageId = Math.random()
     vscode.postMessage({
@@ -69,7 +79,8 @@ export function getLogStreams(
       messageId,
       payload: {
         nextToken,
-        logGroupName
+        logGroupName,
+        region
       }
     })
 

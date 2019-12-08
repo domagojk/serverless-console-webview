@@ -35,15 +35,19 @@ export function ListCloudFormationStacks(props: {
   }, [activeStackName])
 
   return (
-    <table style={{ width: '100%' }}>
+    <table>
       <tr>
-        <td className="td-left">Region</td>
+        <td style={{ width: 100 }}>Region</td>
         <td>
-          <RegionSelect region={region} setRegion={setRegion} />
+          <RegionSelect
+						region={region}
+						setRegion={setRegion}
+						style={{ width: 250 }}
+					/>
         </td>
       </tr>
       <tr>
-        <td className="td-left">Stage name</td>
+        <td style={{ minWidth: 100 }}>Stage name</td>
         <td>
           {loading ? (
             <div>loading...</div>
@@ -54,7 +58,7 @@ export function ListCloudFormationStacks(props: {
           ) : (
             <Select
               showSearch
-              style={{ width: '100%' }}
+              style={{ width: 250 }}
               value={activeStackName}
               onChange={setActiveStackName}
               placeholder="Select a CloudFormation Stack"

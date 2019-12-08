@@ -134,10 +134,10 @@
 
 .config-title {
   font-size: 0.9em;
-  width: 160px;
+  width: 200px;
 }
 .custom-title {
-  width: calc(100% - 160px);
+  width: calc(100% - 200px);
 }
 
 .ant-tabs {
