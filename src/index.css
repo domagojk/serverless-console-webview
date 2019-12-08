@@ -9,13 +9,18 @@ body {
 }
 
 body,
-body body h1,
+body h1,
 body h2,
 body h3,
+body h4,
 body .ant-collapse > .ant-collapse-item > .ant-collapse-header,
 body .logstreamslist .logevent-longmessage,
 body .ant-tabs {
   color: var(--vscode-editor-foreground);
+}
+
+h2 {
+  padding: 0 10px;
 }
 
 ::-webkit-scrollbar-corner {
@@ -32,4 +37,37 @@ body h2 {
 }
 .spanlink:hover {
   opacity: 0.8;
+}
+
+input.ant-input {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-checkbox-border);
+  border-radius: 4px;
+  font-size: 0.9em;
+  outline: none;
+}
+.ant-input-number {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-checkbox-border);
+  border-radius: 4px;
+  font-size: 1em;
+}
+.ant-input-number-handler-wrap {
+  background: var(--vscode-editor-background);
+  border-left: 1px solid var(--vscode-checkbox-border);
+}
+.ant-input-number-handler-down-inner, .ant-input-number-handler-up-inner {
+  color: var(--vscode-editor-foreground);
+}
+.ant-input-number-handler-down {
+  border-top: 1px solid var(--vscode-checkbox-border);
+}
+
+.ant-select-dropdown {
+  font-size: 0.8em;
+}
+.ant-checkbox-wrapper {
+  color: var(--vscode-editor-foreground);
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { LogStreamData } from './asyncData'
+import { LogStreamData } from '../asyncData'
 import { Collapse } from 'antd'
 import moment from 'moment'
 import { LogStream } from './LogStream'

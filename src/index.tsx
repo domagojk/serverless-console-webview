@@ -3,7 +3,8 @@ import './index.css'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import * as serviceWorker from './serviceWorker'
-import { LogsIndex } from './LogsPage/LogsPage'
+import { LogsPage } from './LogsPage/LogsPage'
+import { CreateServicePage } from './CreateServicePage/CreateServicePage'
 
 declare global {
   interface Window {
@@ -14,7 +15,14 @@ declare global {
   }
 }
 
-ReactDOM.render(<LogsIndex />, document.getElementById('root'))
+ReactDOM.render(
+  document.vscodeData.page === 'createService' ? (
+    <CreateServicePage />
+  ) : (
+    <LogsPage />
+  ),
+  document.getElementById('root')
+)
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

@@ -2,7 +2,7 @@ import React from 'react'
 import { LogStreamList } from './LogStreamList'
 import { Overview } from './Overview'
 import { RelativeTime } from './RelativeTime'
-import { getLogStreams, LogStreamData, getLambdaOverview } from './asyncData'
+import { getLogStreams, LogStreamData, getLambdaOverview } from '../asyncData'
 
 export class TabWrapper extends React.Component<{ tab: any }> {
   state = {

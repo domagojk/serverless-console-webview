@@ -133,8 +133,8 @@
   padding-top: 10px;
 }
 .logstreamslist .retry-message-old {
-  margin-top: -5px;
-  padding-bottom: 10px;
+  margin-top: 5px;
+  padding-bottom: 5px;
 }
 .logstreamslist .retry-link {
   padding-left: 5px;
@@ -171,14 +171,6 @@
 }
 .logstream-options .ant-input-search i {
   color: var(--vscode-editor-foreground);
-}
-.logstream-options input {
-  background: var(--vscode-editor-background);
-  color: var(--vscode-editor-foreground);
-  border: 1px solid var(--vscode-checkbox-border);
-  border-radius: 4px;
-  font-size: 0.8em;
-  outline: none;
 }
 mark {
   padding: 0;

@@ -5,7 +5,7 @@ import { TabWrapper } from './TabWrapper'
 
 const { TabPane } = Tabs
 
-export function LogsIndex() {
+export function LogsPage() {
   return (
     <Tabs animated={false}>
       {document.vscodeData.tabs.map((tab: any) => (

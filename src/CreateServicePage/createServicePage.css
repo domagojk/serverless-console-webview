@@ -1,0 +1,164 @@
+.create-page-root {
+  padding: 20px;
+  width: 100%;
+  min-width: 400px;
+  max-width: 700px;
+}
+.button-box-wrapper {
+  display: flex;
+}
+.create-page-root input.ant-input {
+  font-size: 1em;
+}
+.create-page-root input.error {
+  border-color: red;
+}
+.create-page-root td.error .ant-tag {
+  border-color: red;
+}
+.create-page-root .error-desc-wrap {
+  padding: 10px;
+  font-weight: bold;
+}
+/*
+.create-left {
+  float: left;
+  width: calc(100% - 320px);
+  min-width: 550px;
+}
+
+.create-right {
+  display: none;
+  float: right;
+  margin-top: 20px;
+  border: 1px dashed var(--vscode-checkbox-border);
+  padding: 5px;
+  border-radius: 3px;
+  width: 300px;
+}
+.create-right ul.feature-list {
+  padding: 5px 10px 0;
+  margin: 15px 6px 0;
+  font-size: .85em;
+  line-height: 1.8;
+  opacity: .8;
+}
+
+.ant-carousel .slick-dots-bottom {
+  bottom: -10px;
+}
+
+@media (min-width: 950px) {
+  .create-right {
+    display: block;
+  }
+}
+*/
+.submit-button {
+  margin: 10px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  font-size: 1em;
+  border: 0;
+}
+
+.button-box {
+  width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px;
+  height: 50px;
+  border: 1px solid var(--vscode-checkbox-border);
+  justify-content: center;
+  text-align: center;
+  border-radius: 5px;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-weight: 500;
+  font-size: 0.8em;
+  line-height: 1.9;
+  cursor: pointer;
+}
+.button-box i {
+  font-size: 30px;
+  padding: 5px;
+}
+.button-box svg {
+  width: 50px;
+  padding: 5px;
+}
+
+.button-box.active {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.form-table {
+  margin: 20px 10px;
+  width: 100%;
+}
+.form-table tr td {
+  padding-bottom: 5px;
+}
+.form-table > tr > td {
+  padding-right: 10px;
+}
+.form-table .td-left {
+  width: 140px;
+}
+.form-table .ant-tag {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-checkbox-border);
+  line-height: 27px;
+  font-size: 1em;
+}
+.form-table .ant-tag i {
+  color: var(--vscode-editor-foreground);
+}
+.form-table .ant-tag i:hover {
+  color: var(--vscode-editor-foreground);
+  opacity: 0.6;
+}
+
+.ant-select-selection {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-checkbox-border);
+  font-size: 0.8em;
+}
+.ant-select-selection i {
+  color: var(--vscode-editor-foreground);
+}
+
+.config-title {
+  font-size: 0.9em;
+  width: 160px;
+}
+.custom-title {
+  width: calc(100% - 160px);
+}
+
+.ant-tabs {
+  margin-left: 0;
+  font-size: 1em;
+}
+.ant-tabs.ant-tabs-card .ant-tabs-card-bar .ant-tabs-tab {
+  background: none;
+  border: none;
+  font-size: 0.8em;
+  padding: 0;
+  padding-right: 25px;
+}
+.ant-tabs.ant-tabs-card .ant-tabs-card-bar .ant-tabs-tab .ant-tabs-close-x {
+  color: var(--vscode-editor-foreground);
+  opacity: 0.5;
+}
+.ant-tabs.ant-tabs-card
+  .ant-tabs-card-bar
+  .ant-tabs-tab
+  .ant-tabs-close-x:hover {
+  color: var(--vscode-editor-foreground);
+  opacity: 1;
+}

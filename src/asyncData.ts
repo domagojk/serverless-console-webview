@@ -123,3 +123,60 @@ export function getLogEvents(params: {
     }
   })
 }
+
+export function listCloudFormationStacks({
+  region,
+  awsProfile
+}: {
+  region: string
+  awsProfile: string
+}): Promise<{
+  stacks?: string[]
+  error?: string
+}> {
+  return new Promise(resolve => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'listCloudFormationStacks',
+      messageId,
+      payload: {
+        region,
+        awsProfile
+      }
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        resolve({
+          stacks: [],
+          error: message.error
+        })
+      } else {
+        resolve({
+          stacks: message.stacks
+        })
+      }
+    }
+  })
+}
+
+export function addService(payload: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'addService',
+      messageId,
+      payload
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        reject({
+          message: message.error
+        })
+      } else {
+        resolve()
+      }
+    }
+  })
+}

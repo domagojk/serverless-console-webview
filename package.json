@@ -42,5 +42,11 @@
   "devDependencies": {
     "@types/moment": "^2.13.0",
     "@types/react-syntax-highlighter": "^11.0.1"
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": false,
+    "singleQuote": true
   }
 }
