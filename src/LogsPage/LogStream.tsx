@@ -14,6 +14,7 @@ export class LogStream extends React.Component<{
   loadingOld?: boolean
   autoRefreshInterval: number
   isFirstLogStream: boolean
+  isExpanded: boolean
 }> {
   state: {
     loaded: boolean
@@ -48,51 +49,66 @@ export class LogStream extends React.Component<{
   _intervalRef: NodeJS.Timeout
 
   async componentDidMount() {
-    const {
-      logEvents,
-      nextBackwardToken,
-      nextForwardToken
-    } = await getLogEvents({
-      logGroup: this.props.logGroup,
-      logStream: this.props.logStream
-    })
+    try {
+      const {
+        logEvents,
+        nextBackwardToken,
+        nextForwardToken
+      } = await getLogEvents({
+        logGroup: this.props.logGroup,
+        logStream: this.props.logStream
+      })
 
-    this.setState({
-      loaded: true,
-      nextBackwardToken,
-      nextForwardToken,
-      messages: logEvents.map((log, i) => ({
-        timestamp: log.timestamp,
-        messageShort: log.message.slice(0, 500),
-        messageLong: log.message
-      })),
-      preparedMessages: prepareMessagesArr(
-        logEvents.map((log, i) => ({
+      this.setState({
+        loaded: true,
+        nextBackwardToken,
+        nextForwardToken,
+        messages: logEvents.map((log, i) => ({
           timestamp: log.timestamp,
           messageShort: log.message.slice(0, 500),
           messageLong: log.message
         })),
-        this.state.groupPerRequest,
-        this.state.search
-      )
-    })
+        preparedMessages: prepareMessagesArr(
+          logEvents.map((log, i) => ({
+            timestamp: log.timestamp,
+            messageShort: log.message.slice(0, 500),
+            messageLong: log.message
+          })),
+          this.state.groupPerRequest,
+          this.state.search
+        )
+      })
+    } catch (err) {
+      this.setState({
+        loaded: true
+      })
+      if (!err.ignore) {
+        console.error(err)
+      }
+    }
 
     this.initInterval()
   }
 
   initInterval() {
     clearInterval(this._intervalRef)
-    if (this.props.autoRefreshInterval > 500 && this.props.isFirstLogStream) {
+    if (
+      this.props.isExpanded &&
+      this.props.autoRefreshInterval > 500 &&
+      this.props.isFirstLogStream
+    ) {
       this._intervalRef = setInterval(() => {
-        if (this.props.isFirstLogStream) {
-          this.onRetryNew()
-        }
+        this.onRetryNew()
       }, this.props.autoRefreshInterval)
     }
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.autoRefreshInterval !== this.props.autoRefreshInterval) {
+    if (
+      prevProps.isExpanded !== this.props.isExpanded ||
+      prevProps.isFirstLogStream !== this.props.isFirstLogStream ||
+      prevProps.autoRefreshInterval !== this.props.autoRefreshInterval
+    ) {
       this.initInterval()
     }
   }
@@ -101,24 +117,16 @@ export class LogStream extends React.Component<{
     this.setState({
       loadingNew: true
     })
-    const { logEvents, nextForwardToken } = await getLogEvents({
-      logGroup: this.props.logGroup,
-      logStream: this.props.logStream,
-      nextToken: this.state.nextForwardToken
-    })
+    try {
+      const { logEvents, nextForwardToken } = await getLogEvents({
+        logGroup: this.props.logGroup,
+        logStream: this.props.logStream,
+        nextToken: this.state.nextForwardToken
+      })
 
-    this.setState({
-      loadingNew: false,
-      messages: [
-        ...this.state.messages,
-        ...logEvents.map((log, i) => ({
-          timestamp: log.timestamp,
-          messageShort: log.message.slice(0, 500),
-          messageLong: log.message
-        }))
-      ],
-      preparedMessages: prepareMessagesArr(
-        [
+      this.setState({
+        loadingNew: false,
+        messages: [
           ...this.state.messages,
           ...logEvents.map((log, i) => ({
             timestamp: log.timestamp,
@@ -126,35 +134,44 @@ export class LogStream extends React.Component<{
             messageLong: log.message
           }))
         ],
-        this.state.groupPerRequest,
-        this.state.search
-      ),
-      nextForwardToken
-    })
+        preparedMessages: prepareMessagesArr(
+          [
+            ...this.state.messages,
+            ...logEvents.map((log, i) => ({
+              timestamp: log.timestamp,
+              messageShort: log.message.slice(0, 500),
+              messageLong: log.message
+            }))
+          ],
+          this.state.groupPerRequest,
+          this.state.search
+        ),
+        nextForwardToken
+      })
+    } catch (err) {
+      this.setState({
+        loaded: true
+      })
+      if (!err.ignore) {
+        console.error(err)
+      }
+    }
   }
 
   async onRetryOld() {
     this.setState({
       loadingOld: true
     })
-    const { logEvents, nextBackwardToken } = await getLogEvents({
-      logGroup: this.props.logGroup,
-      logStream: this.props.logStream,
-      nextToken: this.state.nextBackwardToken
-    })
+    try {
+      const { logEvents, nextBackwardToken } = await getLogEvents({
+        logGroup: this.props.logGroup,
+        logStream: this.props.logStream,
+        nextToken: this.state.nextBackwardToken
+      })
 
-    this.setState({
-      loadingOld: false,
-      messages: [
-        ...logEvents.map((log, i) => ({
-          timestamp: log.timestamp,
-          messageShort: log.message.slice(0, 500),
-          messageLong: log.message
-        })),
-        ...this.state.messages
-      ],
-      preparedMessages: prepareMessagesArr(
-        [
+      this.setState({
+        loadingOld: false,
+        messages: [
           ...logEvents.map((log, i) => ({
             timestamp: log.timestamp,
             messageShort: log.message.slice(0, 500),
@@ -162,11 +179,28 @@ export class LogStream extends React.Component<{
           })),
           ...this.state.messages
         ],
-        this.state.groupPerRequest,
-        this.state.search
-      ),
-      nextBackwardToken
-    })
+        preparedMessages: prepareMessagesArr(
+          [
+            ...logEvents.map((log, i) => ({
+              timestamp: log.timestamp,
+              messageShort: log.message.slice(0, 500),
+              messageLong: log.message
+            })),
+            ...this.state.messages
+          ],
+          this.state.groupPerRequest,
+          this.state.search
+        ),
+        nextBackwardToken
+      })
+    } catch (err) {
+      this.setState({
+        loaded: true
+      })
+      if (!err.ignore) {
+        console.error(err)
+      }
+    }
   }
 
   render() {

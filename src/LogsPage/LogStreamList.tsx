@@ -34,7 +34,7 @@ export class LogStreamList extends React.Component<Props> {
           <div>
             <Collapse
               className="logstreamslist"
-              onChange={openStreams => this.setState({ openStreams })}
+              onChange={openedStreams => this.setState({ openedStreams })}
             >
               {this.props.error ? (
                 <div className="foreground-color">{this.props.error}</div>
@@ -58,6 +58,7 @@ export class LogStreamList extends React.Component<Props> {
                     >
                       <LogStream
                         isFirstLogStream={index === 0}
+                        isExpanded={this.state.openedStreams.includes(logStream.arn)}
                         logGroup={this.props.tab.logs}
                         logStream={logStream.logStreamName}
                         autoRefreshInterval={this.props.autoRefreshInterval}

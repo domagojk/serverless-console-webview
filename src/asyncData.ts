@@ -129,7 +129,7 @@ export function getLogEvents(params: {
   nextForwardToken: string
   nextBackwardToken: string
 }> {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const messageId = Math.random()
     vscode.postMessage({
       command: 'getLogEvents',
@@ -142,11 +142,15 @@ export function getLogEvents(params: {
     })
 
     subscriptions[messageId] = (message: any) => {
-      resolve({
-        nextBackwardToken: message.nextBackwardToken,
-        nextForwardToken: message.nextForwardToken,
-        logEvents: message.logEvents
-      })
+      if (message.ignore) {
+        reject({ ignore: true })
+      } else {
+        resolve({
+          nextBackwardToken: message.nextBackwardToken,
+          nextForwardToken: message.nextForwardToken,
+          logEvents: message.logEvents
+        })
+      }
     }
   })
 }
