@@ -40,14 +40,14 @@ export function ListCloudFormationStacks(props: {
         <td style={{ width: 100 }}>Region</td>
         <td>
           <RegionSelect
-						region={region}
-						setRegion={setRegion}
-						style={{ width: 250 }}
-					/>
+            region={region}
+            setRegion={setRegion}
+            style={{ width: 250 }}
+          />
         </td>
       </tr>
       <tr>
-        <td style={{ minWidth: 100 }}>Stage name</td>
+        <td style={{ minWidth: 100 }}>Stack name</td>
         <td>
           {loading ? (
             <div>loading...</div>

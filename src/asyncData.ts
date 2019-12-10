@@ -64,14 +64,21 @@ export function getLambdaOverview({
 }
 
 export function getLogStreams({
-	logGroupName,
+  logGroupName,
   nextToken,
+  limit,
   region
 }: {
-	logGroupName: string
-	nextToken?: string
-	region?: string
-}): Promise<{ logStreams: any[]; error?: string; nextToken?: string }> {
+  logGroupName: string
+  nextToken?: string
+  limit?: number
+  region?: string
+}): Promise<{
+  logStreams: any[]
+  error?: string
+  nextToken?: string
+  timestamp: number
+}> {
   return new Promise(resolve => {
     const messageId = Math.random()
     vscode.postMessage({
@@ -79,21 +86,30 @@ export function getLogStreams({
       messageId,
       payload: {
         nextToken,
+        limit,
         logGroupName,
         region
       }
     })
 
     subscriptions[messageId] = (message: any) => {
-      if (message.error) {
+      if (message.ignore) {
         resolve({
           logStreams: [],
-          error: message.error
+          nextToken,
+          timestamp: Date.now()
+        })
+      } else if (message.error) {
+        resolve({
+          logStreams: [],
+          error: message.error,
+          timestamp: Date.now()
         })
       } else {
         resolve({
           nextToken: message.nextToken,
-          logStreams: message.logStreams
+          logStreams: message.logStreams,
+          timestamp: Date.now()
         })
       }
     }
@@ -188,6 +204,23 @@ export function addService(payload: any): Promise<any> {
       } else {
         resolve()
       }
+    }
+  })
+}
+
+export function setAutoRefresh(enabled: boolean): Promise<number> {
+  return new Promise(resolve => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'setAutoRefresh',
+      messageId,
+      payload: {
+        enabled
+      }
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      resolve(message.autoRefreshInterval)
     }
   })
 }

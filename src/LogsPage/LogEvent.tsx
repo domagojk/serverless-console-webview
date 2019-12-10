@@ -49,7 +49,7 @@ export class LogEvent extends React.Component<{
         }
       })
     } else if (this.state.searched) {
-      var instance = new Mark(this.myRef.current)
+      const instance = new Mark(this.myRef.current)
       instance.unmark()
     }
   }

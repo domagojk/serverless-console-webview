@@ -2,7 +2,11 @@ import React from 'react'
 import { Select } from 'antd'
 const { Option } = Select
 
-export function RegionSelect(props: { region: string; setRegion: any, style?: any }) {
+export function RegionSelect(props: {
+  region: string
+  setRegion: any
+  style?: any
+}) {
   return (
     <Select
       showSearch

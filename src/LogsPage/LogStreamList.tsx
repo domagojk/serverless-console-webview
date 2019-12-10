@@ -14,10 +14,15 @@ type Props = {
   logStreams: LogStreamData[]
   nextToken: string
   loadMoreInProgress: boolean
+  autoRefreshInterval: number
   onLoadMore: () => any
 }
 
 export class LogStreamList extends React.Component<Props> {
+  state = {
+    openedStreams: []
+  }
+
   render() {
     return (
       <div className="log-section">
@@ -27,13 +32,16 @@ export class LogStreamList extends React.Component<Props> {
 
         {this.props.loaded ? (
           <div>
-            <Collapse className="logstreamslist">
+            <Collapse
+              className="logstreamslist"
+              onChange={openStreams => this.setState({ openStreams })}
+            >
               {this.props.error ? (
                 <div className="foreground-color">{this.props.error}</div>
               ) : (
                 this.props.logStreams
                   .sort((a, b) => b.sortByTimestamp - a.sortByTimestamp)
-                  .map(logStream => (
+                  .map((logStream, index) => (
                     <Panel
                       header={
                         <div className="logstream">
@@ -49,8 +57,10 @@ export class LogStreamList extends React.Component<Props> {
                       key={logStream.arn}
                     >
                       <LogStream
+                        isFirstLogStream={index === 0}
                         logGroup={this.props.tab.logs}
                         logStream={logStream.logStreamName}
+                        autoRefreshInterval={this.props.autoRefreshInterval}
                       />
                     </Panel>
                   ))

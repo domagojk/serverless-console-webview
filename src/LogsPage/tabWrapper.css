@@ -1,0 +1,11 @@
+.autorefresh {
+  margin-right: 10px;
+  font-size: 0.9em;
+}
+.autorefresh .toggle {
+  font-weight: bold;
+  cursor: pointer;
+}
+.autorefresh .toggle:hover {
+  text-decoration: underline;
+}

@@ -12,6 +12,8 @@ export class LogStream extends React.Component<{
   logGroup: string
   loadingNew?: boolean
   loadingOld?: boolean
+  autoRefreshInterval: number
+  isFirstLogStream: boolean
 }> {
   state: {
     loaded: boolean
@@ -43,6 +45,7 @@ export class LogStream extends React.Component<{
     preparedMessages: [],
     messages: []
   }
+  _intervalRef: NodeJS.Timeout
 
   async componentDidMount() {
     const {
@@ -73,6 +76,25 @@ export class LogStream extends React.Component<{
         this.state.search
       )
     })
+
+    this.initInterval()
+  }
+
+  initInterval() {
+    clearInterval(this._intervalRef)
+    if (this.props.autoRefreshInterval > 500 && this.props.isFirstLogStream) {
+      this._intervalRef = setInterval(() => {
+        if (this.props.isFirstLogStream) {
+          this.onRetryNew()
+        }
+      }, this.props.autoRefreshInterval)
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.autoRefreshInterval !== this.props.autoRefreshInterval) {
+      this.initInterval()
+    }
   }
 
   async onRetryNew() {
@@ -214,7 +236,11 @@ export class LogStream extends React.Component<{
                       {moment(message.timestamp).format('lll')}
                     </span>
                     <span className="logevent-shortmessage">
-                      {message.searchMatches > 0 && <span className="event-tag matches">matches: {message.searchMatches}</span>}
+                      {message.searchMatches > 0 && (
+                        <span className="event-tag matches">
+                          matches: {message.searchMatches}
+                        </span>
+                      )}
                       {message.shortMessageMatched &&
                       message.shortMessageMatched.length
                         ? message.shortMessageMatched.map(tag => (
@@ -299,10 +325,10 @@ function prepareMessagesArr(
     let requestId = ''
 
     const matchStarReqId = message.messageLong.match(
-      /START RequestId: ([a-zA-z0-9\-]*)/
+      /START RequestId: ([a-zA-z0-9-]*)/
     )
     const matchReportReqId = message.messageLong.match(
-      /REPORT RequestId: ([a-zA-z0-9\-]*)/
+      /REPORT RequestId: ([a-zA-z0-9-]*)/
     )
 
     for (let searchReqId of requestIds) {
