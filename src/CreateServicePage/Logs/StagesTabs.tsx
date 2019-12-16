@@ -1,6 +1,7 @@
 import React from 'react'
 import { Tabs, Input } from 'antd'
 import { ListCloudFormationStacks } from './ListCloudFormationStacks'
+import { ListCustomLogGroups } from './ListCustomLogGroups'
 
 const { TabPane } = Tabs
 type Panes = {
@@ -9,7 +10,8 @@ type Panes = {
   stage: string
 }[]
 
-export class CloudFormationsStages extends React.Component<{
+export class StagesTabs extends React.Component<{
+  source: string
   awsProfile: string
   defaultStages: Panes
   defaultRegion: string
@@ -91,29 +93,64 @@ export class CloudFormationsStages extends React.Component<{
           >
             {this.state.panes.map(pane => (
               <TabPane tab={pane.stage} key={pane.stage}>
-                <ListCloudFormationStacks
-                  awsProfile={this.props.awsProfile}
-                  defaultRegion={pane.region || this.props.defaultRegion}
-                  defaultStackName={pane.stage}
-                  stage={this.state.activeKey}
-                  onChange={(stackName, stage, region) => {
-                    const newPanes = this.state.panes.map(pane => {
-                      if (pane.stage === stage) {
-                        return {
-                          ...pane,
-                          region,
-                          stackName
+                {this.props.source === 'cloudformation' && (
+                  <ListCloudFormationStacks
+                    awsProfile={this.props.awsProfile}
+                    defaultRegion={pane.region || this.props.defaultRegion}
+                    defaultStackName={pane.stage}
+                    stage={this.state.activeKey}
+                    onChange={(stackName, stage, region) => {
+                      const newPanes = this.state.panes.map(pane => {
+                        if (pane.stage === stage) {
+                          return {
+                            ...pane,
+                            region,
+                            stackName
+                          }
+                        } else {
+                          return pane
                         }
-                      } else {
-                        return pane
-                      }
-                    })
-                    this.setState({
-                      panes: newPanes
-                    })
-                    this.props.onChange(newPanes)
-                  }}
-                />
+                      })
+                      this.setState({
+                        panes: newPanes
+                      })
+                      this.props.onChange(newPanes)
+                    }}
+                  />
+                )}
+                {this.props.source === 'custom' && (
+                  <ListCustomLogGroups
+                    awsProfile={this.props.awsProfile}
+                    defaultRegion={pane.region || this.props.defaultRegion}
+                    defaultLogGroup={pane.stage}
+                    stage={this.state.activeKey}
+                    onChange={({
+                      logGroupName,
+                      stage,
+                      region,
+                      useCustomTitle,
+                      customTitle
+                    }) => {
+                      const newPanes = this.state.panes.map(pane => {
+                        if (pane.stage === stage) {
+                          return {
+                            ...pane,
+                            region,
+                            logGroupName,
+                            useCustomTitle,
+                            customTitle
+                          }
+                        } else {
+                          return pane
+                        }
+                      })
+                      this.setState({
+                        panes: newPanes
+                      })
+                      this.props.onChange(newPanes)
+                    }}
+                  />
+                )}
               </TabPane>
             ))}
           </Tabs>

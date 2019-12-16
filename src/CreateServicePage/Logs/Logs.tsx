@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { Input, Select, InputNumber, Button, Checkbox } from 'antd'
+import { Input, Select, InputNumber, Button, Checkbox, Icon } from 'antd'
 import { Stages } from './Stages'
-import { addService } from '../asyncData'
-import { CloudFormationsStages } from './CloudFormationsStages'
+import { addService } from '../../asyncData'
+import { StagesTabs } from './StagesTabs'
 const { Option } = Select
 
 type Props = {
@@ -14,10 +14,11 @@ type Props = {
   stages: string[]
   region: string
   title?: string
-  stacks?: [{ stage: string; stackName: string }]
+  stacks?: { stage: string; stackName: string }[]
+  customLogs?: Record<string, { stage: string; logGroup: string }[]>
 }
 
-export function ServerlessFunctions(props: Props) {
+export function Logs(props: Props) {
   const [source, setSource] = useState(props.source)
   const [awsProfile, setAwsProfile] = useState(props.awsProfile)
   const [title, setTitle] = useState(props.title)
@@ -30,6 +31,7 @@ export function ServerlessFunctions(props: Props) {
   const [stacks, setStacks] = useState({} as any)
   const [errors, setErrors] = useState([])
   const [errorsDesc, setErrorsDesc] = useState([])
+  const [customLogItems, setCustomLogItems] = useState(props.customLogs)
 
   let textInput: any = React.createRef()
 
@@ -128,13 +130,14 @@ export function ServerlessFunctions(props: Props) {
           <td className="td-left">Source</td>
           <td>
             <Select
-              defaultValue={source}
+              value={source}
               className={errors.includes('source') && 'error'}
               style={{ width: '100%' }}
               onChange={setSource}
             >
               <Option value="serverless">Serverless Framework (AWS)</Option>
               <Option value="cloudformation">CloudFormation (AWS)</Option>
+              <Option value="custom">Custom (AWS)</Option>
             </Select>
           </td>
         </tr>
@@ -173,7 +176,7 @@ export function ServerlessFunctions(props: Props) {
                   textInput.current.focus()
                 }}
               >
-                Same as the service name
+                Use config service name
               </Checkbox>
 
               <Input
@@ -233,7 +236,8 @@ export function ServerlessFunctions(props: Props) {
           </tr>,
           <tr>
             <td colSpan={2}>
-              <CloudFormationsStages
+              <StagesTabs
+                source={source}
                 awsProfile={awsProfile}
                 defaultStages={props.stacks}
                 defaultRegion={props.region}
@@ -244,10 +248,68 @@ export function ServerlessFunctions(props: Props) {
             </td>
           </tr>
         ]}
+        {source === 'custom' && [
+          <tr>
+            <td className="td-left">Title</td>
+            <td>
+              <Input
+                className={errors.includes('cfTitle') && 'error'}
+                placeholder="Service Title"
+                value={cfTitle}
+                onChange={e => setCfTitle(e.target.value)}
+              />
+            </td>
+          </tr>,
+          <tr>
+            <td colSpan={2}>
+              {Object.entries(customLogItems).map(([id, customLogItem]) => (
+                <div className="tabs-wrapper-item" key={id}>
+                  <StagesTabs
+                    source={source}
+                    awsProfile={awsProfile}
+                    defaultStages={props.stacks}
+                    defaultRegion={props.region}
+                    onChange={logGroups => {
+                      console.log(logGroups)
+                    }}
+                  />
+                  <Icon
+                    type="close"
+                    className="remove-log-item"
+                    onClick={() => {
+                      console.log(id)
+                      const newItems = customLogItems
+                      delete newItems[id]
+                      setCustomLogItems({ ...newItems })
+                    }}
+                  />
+                </div>
+              ))}
+
+              <Button
+                style={{ float: 'right' }}
+                className="submit-button"
+                onClick={() => {
+                  setCustomLogItems({
+                    ...customLogItems,
+                    [Math.random()]: [
+                      {
+                        stage: 'dev'
+                      }
+                    ]
+                  })
+                }}
+              >
+                Add Log Group
+              </Button>
+            </td>
+          </tr>
+        ]}
       </table>
       <Button className="submit-button" onClick={onSubmit}>
         Add Service
       </Button>
+
       <div className="error-desc-wrap">
         {errorsDesc.map((errorDesc, i) => (
           <p key={i}>{errorDesc}</p>

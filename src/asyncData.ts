@@ -191,6 +191,42 @@ export function listCloudFormationStacks({
   })
 }
 
+export function describeLogGroups({
+  region,
+  awsProfile
+}: {
+  region: string
+  awsProfile: string
+}): Promise<{
+  logGroups?: string[]
+  error?: string
+}> {
+  return new Promise(resolve => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'describeLogGroups',
+      messageId,
+      payload: {
+        region,
+        awsProfile
+      }
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        resolve({
+          logGroups: [],
+          error: message.error
+        })
+      } else {
+        resolve({
+          logGroups: message.logGroups
+        })
+      }
+    }
+  })
+}
+
 export function addService(payload: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const messageId = Math.random()

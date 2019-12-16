@@ -1,5 +1,5 @@
 import React from 'react'
-import { ServerlessFunctions } from './ServerlessFunctions'
+import { Logs } from './Logs/Logs'
 import './createServicePage.css'
 // import { Carousel } from 'antd'
 
@@ -19,7 +19,7 @@ export function CreateServicePage() {
       */}
 
       <div>
-        <ServerlessFunctions
+        <Logs
           awsProfile="default"
           source="serverless"
           cwd="./"
@@ -28,6 +28,9 @@ export function CreateServicePage() {
           region="us-east-1"
           stages={['dev']}
           stacks={[{ stage: 'dev', stackName: null }]}
+          customLogs={{
+            default: [{ stage: 'dev', logGroup: null }]
+          }}
         />
         {/*
         <div className="create-right">
