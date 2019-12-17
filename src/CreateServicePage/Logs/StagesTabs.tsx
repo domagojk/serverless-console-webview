@@ -5,9 +5,12 @@ import { ListCustomLogGroups } from './ListCustomLogGroups'
 
 const { TabPane } = Tabs
 type Panes = {
-  stackName?: string
-  region?: string
   stage: string
+  stackName?: string
+  logGroupName?: string
+  region?: string
+  useLogGroupName?: boolean
+  customTitle?: string
 }[]
 
 export class StagesTabs extends React.Component<{
@@ -91,7 +94,7 @@ export class StagesTabs extends React.Component<{
             animated
             onEdit={this.onEdit}
           >
-            {this.state.panes.map(pane => (
+            {this.state.panes.map((pane, index) => (
               <TabPane tab={pane.stage} key={pane.stage}>
                 {this.props.source === 'cloudformation' && (
                   <ListCloudFormationStacks
@@ -124,11 +127,12 @@ export class StagesTabs extends React.Component<{
                     defaultRegion={pane.region || this.props.defaultRegion}
                     defaultLogGroup={pane.stage}
                     stage={this.state.activeKey}
+                    showTitle={index === 0}
                     onChange={({
                       logGroupName,
                       stage,
                       region,
-                      useCustomTitle,
+                      useLogGroupName,
                       customTitle
                     }) => {
                       const newPanes = this.state.panes.map(pane => {
@@ -137,7 +141,7 @@ export class StagesTabs extends React.Component<{
                             ...pane,
                             region,
                             logGroupName,
-                            useCustomTitle,
+                            useLogGroupName,
                             customTitle
                           }
                         } else {
@@ -155,7 +159,7 @@ export class StagesTabs extends React.Component<{
             ))}
           </Tabs>
         </div>
-        <div style={{ width: '30%', marginTop: 18 }}>
+        <div style={{ width: '30%', marginTop: 8 }}>
           <Input
             style={{ borderTop: 0, borderLeft: 0, borderRight: 0 }}
             value={this.state.newStageVal}

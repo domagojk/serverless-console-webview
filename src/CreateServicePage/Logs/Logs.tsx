@@ -15,7 +15,17 @@ type Props = {
   region: string
   title?: string
   stacks?: { stage: string; stackName: string }[]
-  customLogs?: Record<string, { stage: string; logGroup: string }[]>
+  customLogs?: Record<
+    string,
+    {
+      stage: string
+      logGroup?: string
+      logGroupName?: string
+      region?: string
+      useLogGroupName?: boolean
+      customTitle?: string
+    }[]
+  >
 }
 
 export function Logs(props: Props) {
@@ -23,6 +33,7 @@ export function Logs(props: Props) {
   const [awsProfile, setAwsProfile] = useState(props.awsProfile)
   const [title, setTitle] = useState(props.title)
   const [cfTitle, setCfTitle] = useState(props.title)
+  const [customTitle, setCustomTitle] = useState(props.title)
   const [useSlsTitle, setUseSlsTitle] = useState(!Boolean(props.title))
   const [cwd, setCwd] = useState(props.cwd)
   const [print, setPrint] = useState(props.print)
@@ -100,6 +111,53 @@ export function Logs(props: Props) {
             offset,
             stacks,
             title: cfTitle
+          })
+        } catch (err) {
+          errorsDescTemp.push(err.message)
+        }
+      }
+    } else {
+      if (!customTitle) {
+        errorsTemp.push('customTitle')
+        errorsDescTemp.push('Title is required')
+      }
+
+      const items = Object.values(customLogItems).map(stages => {
+        const item = {
+          title:
+            stages[0].useLogGroupName && stages[0].logGroupName
+              ? stages[0].logGroupName
+              : stages[0].customTitle,
+          tabs: stages.map(stage => {
+            if (!stage.logGroupName) {
+              errorsDescTemp.push(`Missing log in stage ${stage.stage}`)
+            }
+
+            return {
+              region: stage.region,
+              title: stage.stage,
+              logs: stage.logGroupName
+            }
+          })
+        }
+        if (!item.title) {
+          errorsDescTemp.push(`Missing title in stage ${stages[0].stage}`)
+        }
+        return item
+      })
+
+      if (items.length === 0) {
+        errorsDescTemp.push('At least one stage must be defined')
+      }
+
+      if (errorsDescTemp.length === 0) {
+        try {
+          await addService({
+            source,
+            awsProfile,
+            offset,
+            items,
+            title: customTitle
           })
         } catch (err) {
           errorsDescTemp.push(err.message)
@@ -253,10 +311,10 @@ export function Logs(props: Props) {
             <td className="td-left">Title</td>
             <td>
               <Input
-                className={errors.includes('cfTitle') && 'error'}
+                className={errors.includes('customTitle') && 'error'}
                 placeholder="Service Title"
-                value={cfTitle}
-                onChange={e => setCfTitle(e.target.value)}
+                value={customTitle}
+                onChange={e => setCustomTitle(e.target.value)}
               />
             </td>
           </tr>,
@@ -270,14 +328,16 @@ export function Logs(props: Props) {
                     defaultStages={props.stacks}
                     defaultRegion={props.region}
                     onChange={logGroups => {
-                      console.log(logGroups)
+                      setCustomLogItems({
+                        ...customLogItems,
+                        [id]: logGroups
+                      })
                     }}
                   />
                   <Icon
                     type="close"
                     className="remove-log-item"
                     onClick={() => {
-                      console.log(id)
                       const newItems = customLogItems
                       delete newItems[id]
                       setCustomLogItems({ ...newItems })
@@ -290,9 +350,11 @@ export function Logs(props: Props) {
                 style={{ float: 'right' }}
                 className="submit-button"
                 onClick={() => {
+                  const num = Object.keys(customLogItems).length
+
                   setCustomLogItems({
                     ...customLogItems,
-                    [Math.random()]: [
+                    [`${num}-${Math.random()}`]: [
                       {
                         stage: 'dev'
                       }

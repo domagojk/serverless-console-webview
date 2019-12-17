@@ -120,6 +120,7 @@ export function getLogEvents(params: {
   logStream: string
   logGroup: string
   nextToken?: string
+  region?: string
 }): Promise<{
   logEvents: {
     ingestionTime: string
@@ -137,7 +138,8 @@ export function getLogEvents(params: {
       payload: {
         nextToken: params.nextToken,
         logGroup: params.logGroup,
-        logStream: params.logStream
+        logStream: params.logStream,
+        region: params.region
       }
     })
 

@@ -60,6 +60,7 @@ export class LogStreamList extends React.Component<Props> {
                         isFirstLogStream={index === 0}
                         isExpanded={this.state.openedStreams.includes(logStream.arn)}
                         logGroup={this.props.tab.logs}
+                        region={this.props.tab.region}
                         logStream={logStream.logStreamName}
                         autoRefreshInterval={this.props.autoRefreshInterval}
                       />

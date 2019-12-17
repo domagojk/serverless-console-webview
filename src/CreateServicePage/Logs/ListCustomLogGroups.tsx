@@ -10,11 +10,12 @@ export function ListCustomLogGroups(props: {
   defaultRegion: string
   defaultLogGroup: string
   title?: string
+  showTitle: boolean
   onChange: (props: {
     logGroupName: string
     stage: string
     region: string
-    useCustomTitle?: boolean
+    useLogGroupName?: boolean
     customTitle?: string
   }) => any
 }) {
@@ -23,7 +24,7 @@ export function ListCustomLogGroups(props: {
   const [logGroups, setLogGroups] = useState([])
   const [region, setRegion] = useState(props.defaultRegion)
   const [activeLogGroup, setActiveLogGroup] = useState(props.defaultLogGroup)
-  const [useCustomTitle, setUseCustomTitle] = useState(!Boolean(props.title))
+  const [useLogGroupName, setUseLogGroupName] = useState(!Boolean(props.title))
   const [customTitle, setCustomTitle] = useState(props.title)
 
   let textInput: any = React.createRef()
@@ -46,10 +47,10 @@ export function ListCustomLogGroups(props: {
       logGroupName: activeLogGroup,
       stage: props.stage,
       region: region,
-      useCustomTitle: useCustomTitle,
+      useLogGroupName: useLogGroupName,
       customTitle: customTitle
     })
-  }, [activeLogGroup, useCustomTitle, customTitle])
+  }, [activeLogGroup, useLogGroupName, customTitle])
 
   return (
     <table>
@@ -96,26 +97,30 @@ export function ListCustomLogGroups(props: {
       </tr>
       <tr>
         <td className="td-left">Title</td>
-        <td>
-          <Checkbox
-            className="config-title"
-            style={{ width: 140, opacity: useCustomTitle ? 1 : 0.5 }}
-            checked={useCustomTitle}
-            onChange={e => {
-              setUseCustomTitle(e.target.checked)
-              textInput.current.focus()
-            }}
-          >
-            Use Log Group name
-          </Checkbox>
+        {props.showTitle ? (
+          <td>
+            <Checkbox
+              className="config-title"
+              style={{ width: 150, opacity: useLogGroupName ? 1 : 0.5 }}
+              checked={useLogGroupName}
+              onChange={e => {
+                setUseLogGroupName(e.target.checked)
+                textInput.current.focus()
+              }}
+            >
+              Use Log Group name
+            </Checkbox>
 
-          <Input
-            style={{ width: 110, opacity: useCustomTitle ? 0 : 1 }}
-            ref={textInput}
-            value={customTitle}
-            onChange={e => setCustomTitle(e.target.value)}
-          />
-        </td>
+            <Input
+              style={{ width: 100, opacity: useLogGroupName ? 0 : 1 }}
+              ref={textInput}
+              value={customTitle}
+              onChange={e => setCustomTitle(e.target.value)}
+            />
+          </td>
+        ) : (
+          <td>will be the same as in first stage</td>
+        )}
       </tr>
     </table>
   )

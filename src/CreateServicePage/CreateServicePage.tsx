@@ -29,7 +29,7 @@ export function CreateServicePage() {
           stages={['dev']}
           stacks={[{ stage: 'dev', stackName: null }]}
           customLogs={{
-            default: [{ stage: 'dev', logGroup: null }]
+            '0-default': [{ stage: 'dev', logGroup: null }]
           }}
         />
         {/*

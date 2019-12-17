@@ -15,6 +15,7 @@ export class LogStream extends React.Component<{
   autoRefreshInterval: number
   isFirstLogStream: boolean
   isExpanded: boolean
+  region?: string
 }> {
   state: {
     loaded: boolean
@@ -56,7 +57,8 @@ export class LogStream extends React.Component<{
         nextForwardToken
       } = await getLogEvents({
         logGroup: this.props.logGroup,
-        logStream: this.props.logStream
+        logStream: this.props.logStream,
+        region: this.props.region
       })
 
       this.setState({
@@ -121,7 +123,8 @@ export class LogStream extends React.Component<{
       const { logEvents, nextForwardToken } = await getLogEvents({
         logGroup: this.props.logGroup,
         logStream: this.props.logStream,
-        nextToken: this.state.nextForwardToken
+        nextToken: this.state.nextForwardToken,
+        region: this.props.region
       })
 
       this.setState({
@@ -166,7 +169,8 @@ export class LogStream extends React.Component<{
       const { logEvents, nextBackwardToken } = await getLogEvents({
         logGroup: this.props.logGroup,
         logStream: this.props.logStream,
-        nextToken: this.state.nextBackwardToken
+        nextToken: this.state.nextBackwardToken,
+        region: this.props.region
       })
 
       this.setState({

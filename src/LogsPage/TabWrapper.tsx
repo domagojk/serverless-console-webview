@@ -17,6 +17,7 @@ export class TabWrapper extends React.Component<{
   isActive: boolean
 }> {
   state = {
+    refreshClickedInProgres: false,
     refreshInProgres: false,
     loadMoreInProgress: false,
     loaded: false,
@@ -97,6 +98,7 @@ export class TabWrapper extends React.Component<{
       error,
       logStreams: [...oldStreams, ...logStreams],
       refreshInProgres: false,
+      refreshClickedInProgres: false,
       lastRefreshed: timestamp
     })
   }
@@ -129,6 +131,7 @@ export class TabWrapper extends React.Component<{
       error,
       logStreams: [...oldStreams, ...logStreams],
       refreshInProgres: false,
+      refreshClickedInProgres: false,
       overviewProps,
       lastRefreshed: timestamp
     })
@@ -179,11 +182,14 @@ export class TabWrapper extends React.Component<{
             className="spanlink"
             onClick={() => {
               if (!this.state.refreshInProgres) {
+                this.setState({
+                  refreshClickedInProgres: true
+                })
                 this.onRefresh()
               }
             }}
           >
-            Refresh
+            {this.state.refreshClickedInProgres ? 'Loading...' : 'Refresh'}
           </span>
           <div className="last-refreshed">
             last refresh:{' '}
