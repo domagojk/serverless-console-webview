@@ -6,6 +6,7 @@ body {
   background: var(--vscode-editor-background);
   font-size: var(--vscode-font-size);
   margin: 0;
+  padding-left: 0;
 }
 
 body,
@@ -17,10 +18,6 @@ body .ant-collapse > .ant-collapse-item > .ant-collapse-header,
 body .logstreamslist .logevent-longmessage,
 body .ant-tabs {
   color: var(--vscode-editor-foreground);
-}
-
-h2 {
-  padding: 0 10px;
 }
 
 ::-webkit-scrollbar-corner {
@@ -37,6 +34,14 @@ body h2 {
 }
 .spanlink:hover {
   opacity: 0.8;
+}
+
+.whitelink {
+  cursor: pointer;
+  color: var(--vscode-editor-foreground);
+}
+.whitelink:hover {
+  color: var(--vscode-textLink-foreground);
 }
 
 input.ant-input {
@@ -58,7 +63,8 @@ input.ant-input {
   background: var(--vscode-editor-background);
   border-left: 1px solid var(--vscode-checkbox-border);
 }
-.ant-input-number-handler-down-inner, .ant-input-number-handler-up-inner {
+.ant-input-number-handler-down-inner,
+.ant-input-number-handler-up-inner {
   color: var(--vscode-editor-foreground);
 }
 .ant-input-number-handler-down {
@@ -70,4 +76,37 @@ input.ant-input {
 }
 .ant-checkbox-wrapper {
   color: var(--vscode-editor-foreground);
+}
+
+.sidebar {
+  position: fixed;
+  width: 50px;
+  top: 0;
+  left: 0px;
+  border-right: 1px solid #4a4a4a1f;
+  height: 100%;
+}
+.sidebar-item {
+  cursor: pointer;
+  opacity: 0.25;
+  text-align: center;
+  padding: 15px 0 0px 0;
+  font-size: 18px;
+}
+.sidebar-item:hover {
+  opacity: 0.5;
+}
+
+.vscode-dark .sidebar-item:hover { 
+  color: #fff
+}
+.vscode-light .sidebar-item:hover { 
+  color: #000
+}
+.sidebar-item.active {
+  opacity: 1!important;
+}
+.main-wrapper {
+  margin-left: 60px;
+  padding: 5px;
 }

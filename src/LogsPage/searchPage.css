@@ -1,0 +1,36 @@
+.search-page {
+  padding: 10px;
+}
+.search-page h2 {
+  padding-left: 0;
+}
+.search-page .search-options {
+  padding-top: 2px;
+  height: 28px;
+  font-size: 0.9em;
+}
+.search-page .search-options .left {
+  float: left;
+}
+.search-page .search-options .right {
+  float: right;
+}
+
+.search-page .timeframe span.separator {
+  padding: 0 5px;
+}
+.search-page .timeframe span {
+  opacity: 0.5;
+}
+.search-page .timeframe span.active {
+  font-weight: bold;
+  opacity: 1;
+}
+
+.search-page .search-query textarea {
+  font-size: 0.9em;
+}
+.search-page .search-query .reset {
+  float: right;
+}
+
