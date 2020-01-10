@@ -159,7 +159,7 @@ export class StagesTabs extends React.Component<{
             ))}
           </Tabs>
         </div>
-        <div style={{ width: '30%', marginTop: 18 }}>
+        <div style={{ width: '30%', marginTop: 8 }}>
           <Input
             style={{ borderTop: 0, borderLeft: 0, borderRight: 0 }}
             value={this.state.newStageVal}

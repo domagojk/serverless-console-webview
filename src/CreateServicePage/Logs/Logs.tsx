@@ -43,10 +43,13 @@ export function Logs(props: Props) {
   const [errors, setErrors] = useState([])
   const [errorsDesc, setErrorsDesc] = useState([])
   const [customLogItems, setCustomLogItems] = useState(props.customLogs)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
   let textInput: any = React.createRef()
 
   const onSubmit = async e => {
+    setSuccessMessage('')
     let errorsTemp = []
     let errorsDescTemp = []
 
@@ -74,6 +77,7 @@ export function Logs(props: Props) {
       }
 
       if (errorsDescTemp.length === 0) {
+        setLoading(true)
         try {
           await addService({
             source,
@@ -83,11 +87,12 @@ export function Logs(props: Props) {
             offset,
             stages,
             stacks,
-            title
+            title: useSlsTitle ? null : title
           })
         } catch (err) {
           errorsDescTemp.push(err.message)
         }
+        setLoading(false)
       }
     } else if (source === 'cloudformation') {
       if (!cfTitle) {
@@ -104,6 +109,7 @@ export function Logs(props: Props) {
       }
 
       if (errorsDescTemp.length === 0) {
+        setLoading(true)
         try {
           await addService({
             source,
@@ -115,6 +121,7 @@ export function Logs(props: Props) {
         } catch (err) {
           errorsDescTemp.push(err.message)
         }
+        setLoading(false)
       }
     } else {
       if (!customTitle) {
@@ -166,6 +173,7 @@ export function Logs(props: Props) {
     }
 
     if (errorsDescTemp.length === 0) {
+      setSuccessMessage('Service successfully added')
       setSource(props.source)
       setAwsProfile(props.awsProfile)
       setTitle(props.title)
@@ -179,7 +187,9 @@ export function Logs(props: Props) {
 
     setErrors(errorsTemp)
     setErrorsDesc(errorsDescTemp)
-    e.target.blur()
+    try {
+      e.target.blur()
+    } catch (err) {}
   }
   return (
     <div>
@@ -368,15 +378,21 @@ export function Logs(props: Props) {
           </tr>
         ]}
       </table>
-      <Button className="submit-button" onClick={onSubmit}>
+      <Button loading={loading} className="submit-button" onClick={onSubmit}>
         Add Service
       </Button>
 
       <div className="error-desc-wrap">
-        {errorsDesc.map((errorDesc, i) => (
-          <p key={i}>{errorDesc}</p>
-        ))}
+        {errorsDesc.map((errorDesc, i) =>
+          errorDesc.length > 150 ? (
+            <textarea value={errorDesc} className="errortextarea" readOnly />
+          ) : (
+            <p>{errorDesc}</p>
+          )
+        )}
       </div>
+
+      {successMessage && <div>{successMessage}</div>}
     </div>
   )
 }

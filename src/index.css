@@ -15,7 +15,6 @@ body h2,
 body h3,
 body h4,
 body .ant-collapse > .ant-collapse-item > .ant-collapse-header,
-body .logstreamslist .logevent-longmessage,
 body .ant-tabs {
   color: var(--vscode-editor-foreground);
 }
