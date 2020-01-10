@@ -12,10 +12,11 @@ export class LogStream extends React.Component<{
   logGroup: string
   loadingNew?: boolean
   loadingOld?: boolean
-  autoRefreshInterval: number
-  isFirstLogStream: boolean
-  isExpanded: boolean
+  autoRefreshInterval?: number
+  isFirstLogStream?: boolean
+  isExpanded?: boolean
   region?: string
+  defaultSearch?: string
 }> {
   state: {
     loaded: boolean
@@ -40,14 +41,21 @@ export class LogStream extends React.Component<{
       searchMatches: number
       shortMessageMatched?: string[]
     }[]
-  } = {
-    search: '',
-    groupPerRequest: document.vscodeData.groupPerRequest,
-    loaded: false,
-    preparedMessages: [],
-    messages: []
+    error?: string
   }
   _intervalRef: NodeJS.Timeout
+
+  constructor(params) {
+    super(params)
+
+    this.state = {
+      search: params.defaultSearch,
+      groupPerRequest: document.vscodeData.groupPerRequest,
+      loaded: false,
+      preparedMessages: [],
+      messages: []
+    }
+  }
 
   async componentDidMount() {
     try {
@@ -62,6 +70,7 @@ export class LogStream extends React.Component<{
       })
 
       this.setState({
+        error: null,
         loaded: true,
         nextBackwardToken,
         nextForwardToken,
@@ -80,12 +89,13 @@ export class LogStream extends React.Component<{
           this.state.search
         )
       })
-    } catch (err) {
+    } catch (error) {
       this.setState({
-        loaded: true
+        loaded: true,
+        error
       })
-      if (!err.ignore) {
-        console.error(err)
+      if (!error.ignore) {
+        console.error(error)
       }
     }
 
@@ -129,6 +139,7 @@ export class LogStream extends React.Component<{
 
       this.setState({
         loadingNew: false,
+        error: null,
         messages: [
           ...this.state.messages,
           ...logEvents.map((log, i) => ({
@@ -151,12 +162,13 @@ export class LogStream extends React.Component<{
         ),
         nextForwardToken
       })
-    } catch (err) {
+    } catch (error) {
       this.setState({
-        loaded: true
+        loadingNew: false,
+        error
       })
-      if (!err.ignore) {
-        console.error(err)
+      if (!error.ignore) {
+        console.error(error)
       }
     }
   }
@@ -175,6 +187,7 @@ export class LogStream extends React.Component<{
 
       this.setState({
         loadingOld: false,
+        error: null,
         messages: [
           ...logEvents.map((log, i) => ({
             timestamp: log.timestamp,
@@ -197,12 +210,13 @@ export class LogStream extends React.Component<{
         ),
         nextBackwardToken
       })
-    } catch (err) {
+    } catch (error) {
       this.setState({
-        loaded: true
+        loadingOld: false,
+        error
       })
-      if (!err.ignore) {
-        console.error(err)
+      if (!error.ignore) {
+        console.error(error)
       }
     }
   }
@@ -296,6 +310,7 @@ export class LogStream extends React.Component<{
             )
           })}
         </Collapse>,
+        this.state.error ? <div className="error">{this.state.error}</div> : null,
         <div className="retry-message retry-message-new" key="retrynew">
           {this.state.loadingNew ? (
             'loading new events...'
@@ -337,7 +352,7 @@ function extractJSON(str: string) {
   return str
 }
 
-function prepareMessagesArr(
+export function prepareMessagesArr(
   messages: {
     timestamp: number
     key?: string

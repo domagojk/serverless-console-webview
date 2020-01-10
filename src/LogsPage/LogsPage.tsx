@@ -77,7 +77,7 @@ export function LogsPage() {
                     display: activePage === 'search' ? 'block' : 'none'
                   }}
                 >
-                  <SearchPage />
+                  <SearchPage logGroupName={tab.logs} region={tab.region} />
                 </div>
               )}
 

@@ -1,3 +1,5 @@
+import moment from 'moment'
+
 export type LogStreamData = {
   creationTime: number
   firstEventTimestamp: number
@@ -26,7 +28,6 @@ window.addEventListener('message', event => {
 
   if (subscriptions[message.messageId]) {
     subscriptions[message.messageId](message.payload)
-    delete subscriptions[message.messageId]
   }
 })
 
@@ -146,6 +147,8 @@ export function getLogEvents(params: {
     subscriptions[messageId] = (message: any) => {
       if (message.ignore) {
         reject({ ignore: true })
+      } else if (message.error) {
+        reject(message.error)
       } else {
         resolve({
           nextBackwardToken: message.nextBackwardToken,
@@ -263,6 +266,115 @@ export function setAutoRefresh(enabled: boolean): Promise<number> {
 
     subscriptions[messageId] = (message: any) => {
       resolve(message.autoRefreshInterval)
+    }
+  })
+}
+
+export function startQuery(payload: {
+  ref: string
+  startTime: number
+  endTime: number
+  query: string
+  logGroupName: string
+  region: string
+}): Promise<{ queryId: string }> {
+  return new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'startQuery',
+      messageId,
+      payload
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        reject(message.error)
+      } else {
+        resolve(message)
+      }
+    }
+  })
+}
+
+export function stopQuery(payload: { queryId: string }): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'stopQuery',
+      messageId,
+      payload
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        reject(message.error)
+      } else {
+        resolve(message)
+      }
+    }
+  })
+}
+
+export function getQueryResults(payload: {
+  queryId: string
+  ref: string
+}): Promise<{
+  status:
+    | 'Scheduled'
+    | 'Running'
+    | 'Complete'
+    | 'Failed'
+    | 'Cancelled'
+    | 'Error'
+  statistics?: {
+    bytesScanned: number
+    recordsMatched: number
+    recordsScanned: number
+  }
+  results: {
+    timestamp: number
+    messageShort: string
+    messageLong: string
+  }[]
+}> {
+  return new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'getQueryResults',
+      messageId,
+      payload
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        reject({
+          status: 'Error',
+          results: []
+        })
+      } else {
+        resolve({
+          ...message,
+          results: message.results
+            .map(r =>
+              r.reduce((acc, curr) => {
+                acc[curr.field] = curr.value
+                return acc
+              }, {})
+            )
+            .map(log => {
+              var utcOffsetInMs = new Date().getTimezoneOffset() * 60000
+
+              return {
+                timestamp:
+                  moment(log['@timestamp'])
+                    .toDate()
+                    .getTime() - utcOffsetInMs,
+                messageShort: log['@message'].slice(0, 500),
+                messageLong: log['@message']
+              }
+            })
+        })
+      }
     }
   })
 }
