@@ -212,11 +212,26 @@ export function Logs(props: Props) {
         <tr>
           <td className="td-left">AWS Profile</td>
           <td>
-            <Input
-              className={errors.includes('awsProfile') && 'error'}
-              value={awsProfile}
-              onChange={e => setAwsProfile(e.target.value)}
-            />
+            {document.vscodeData.profiles &&
+            document.vscodeData.profiles.length &&
+            document.vscodeData.profiles.includes(awsProfile) ? (
+              <Select
+                value={awsProfile}
+                className={errors.includes('awsProfile') && 'error'}
+                style={{ width: '100%' }}
+                onChange={setAwsProfile}
+              >
+                {document.vscodeData.profiles.map(profile => (
+                  <Option value={profile}>{profile}</Option>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                className={errors.includes('awsProfile') && 'error'}
+                value={awsProfile}
+                onChange={e => setAwsProfile(e.target.value)}
+              />
+            )}
           </td>
         </tr>
         <tr>
