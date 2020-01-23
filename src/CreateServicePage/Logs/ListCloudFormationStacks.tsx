@@ -17,18 +17,20 @@ export function ListCloudFormationStacks(props: {
   const [region, setRegion] = useState(props.defaultRegion)
   const [activeStackName, setActiveStackName] = useState(props.defaultStackName)
 
+  const { awsProfile } = props
+
   useEffect(() => {
     setLoading(true)
     listCloudFormationStacks({
       region,
-      awsProfile: props.awsProfile
+      awsProfile
     }).then(({ stacks, error }) => {
       setLoading(false)
       setError(error)
       setStacks(stacks)
       setActiveStackName(stacks[0])
     })
-  }, [region])
+  }, [region, awsProfile])
 
   useEffect(() => {
     props.onChange(activeStackName, props.stage, region)

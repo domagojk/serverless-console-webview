@@ -432,6 +432,7 @@ export class SearchPage extends React.Component<
                 href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html"
                 className="whitelink"
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 more info
               </a>

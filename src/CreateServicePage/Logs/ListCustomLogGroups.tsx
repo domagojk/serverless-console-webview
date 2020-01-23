@@ -27,20 +27,22 @@ export function ListCustomLogGroups(props: {
   const [useLogGroupName, setUseLogGroupName] = useState(!Boolean(props.title))
   const [customTitle, setCustomTitle] = useState(props.title)
 
+  const { awsProfile } = props
+  
   let textInput: any = React.createRef()
 
   useEffect(() => {
     setLoading(true)
     describeLogGroups({
       region,
-      awsProfile: props.awsProfile
+      awsProfile
     }).then(({ logGroups, error }) => {
       setLoading(false)
       setError(error)
       setLogGroups(logGroups)
       setActiveLogGroup(logGroups[0])
     })
-  }, [region])
+  }, [region, awsProfile])
 
   useEffect(() => {
     props.onChange({
