@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom'
 import * as serviceWorker from './serviceWorker'
 import { LogsPage } from './LogsPage/LogsPage'
 import { CreateServicePage } from './CreateServicePage/CreateServicePage'
+import { DynamoDb } from './DynamoDb/DynamoDb'
 
 declare global {
   interface Window {
@@ -18,6 +19,8 @@ declare global {
 ReactDOM.render(
   document.vscodeData.page === 'createService' ? (
     <CreateServicePage />
+  ) : document.vscodeData.page === 'dynamoDb' ? (
+    <DynamoDb />
   ) : (
     <LogsPage />
   ),

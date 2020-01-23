@@ -77,35 +77,3 @@ input.ant-input {
   color: var(--vscode-editor-foreground);
 }
 
-.sidebar {
-  position: fixed;
-  width: 50px;
-  top: 0;
-  left: 0px;
-  border-right: 1px solid #4a4a4a1f;
-  height: 100%;
-}
-.sidebar-item {
-  cursor: pointer;
-  opacity: 0.25;
-  text-align: center;
-  padding: 15px 0 0px 0;
-  font-size: 18px;
-}
-.sidebar-item:hover {
-  opacity: 0.5;
-}
-
-.vscode-dark .sidebar-item:hover { 
-  color: #fff
-}
-.vscode-light .sidebar-item:hover { 
-  color: #000
-}
-.sidebar-item.active {
-  opacity: 1!important;
-}
-.main-wrapper {
-  margin-left: 60px;
-  padding: 5px;
-}

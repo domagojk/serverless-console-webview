@@ -19,7 +19,7 @@ export function LogsPage() {
   )
 
   return (
-    <div>
+    <div className="logs-page">
       <div className="sidebar">
         <div
           className={
