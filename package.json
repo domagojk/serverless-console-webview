@@ -15,10 +15,12 @@
     "mark.js": "8.11.1",
     "moment": "2.24.0",
     "react": "^16.11.0",
+    "react-base-table": "^1.9.1",
     "react-dom": "^16.11.0",
     "react-scripts": "3.2.0",
     "react-syntax-highlighter": "11.0.2",
     "react-table": "^7.0.0-rc.15",
+    "react-window": "^1.8.5",
     "typescript": "3.6.4"
   },
   "scripts": {
@@ -45,7 +47,8 @@
   },
   "devDependencies": {
     "@types/moment": "^2.13.0",
-    "@types/react-syntax-highlighter": "^11.0.1"
+    "@types/react-syntax-highlighter": "^11.0.1",
+    "aws-sdk": "^2.610.0"
   },
   "prettier": {
     "tabWidth": 2,

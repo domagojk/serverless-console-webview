@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Input, Select, InputNumber, Button, Checkbox, Icon } from 'antd'
 import { Stages } from './Stages'
-import { addService } from '../../asyncData'
+import { addService } from '../../asyncData/asyncData'
 import { StagesTabs } from './StagesTabs'
 const { Option } = Select
 

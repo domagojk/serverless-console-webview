@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { describeLogGroups } from '../../asyncData'
+import { describeLogGroups } from '../../asyncData/asyncData'
 import { Select, Checkbox, Input } from 'antd'
 import { RegionSelect } from '../RegionSelect'
 const { Option } = Select

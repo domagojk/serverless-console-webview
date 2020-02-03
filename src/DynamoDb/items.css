@@ -1,0 +1,27 @@
+.dynamodb-page .table-wrapper {
+  position: fixed;
+  left: 15px;
+  right: 15px;
+  bottom: 60px;
+  top: 100px;
+}
+.dynamodb-page .BaseTable__header-row {
+  background: var(--vscode-editor-lineHighlightBorder);
+}
+.dynamodb-page .BaseTable__row {
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-breadcrumbPicker-background);
+}
+.dynamodb-page .BaseTable__header-row {
+  border-bottom: 1px solid var(--vscode-breadcrumbPicker-background);
+}
+.dynamodb-page .BaseTable__table-main {
+  outline: 1px solid var(--vscode-breadcrumbPicker-background);
+}
+.dynamodb-page .BaseTable__table,
+.dynamodb-page .BaseTable__footer,
+.dynamodb-page .BaseTable__empty-layer,
+.dynamodb-page .BaseTable {
+  background: none;
+  box-shadow: none;
+}

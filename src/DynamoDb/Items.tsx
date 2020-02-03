@@ -1,164 +1,106 @@
 import React from 'react'
-import { useTable, usePagination } from 'react-table'
+import BaseTable, { AutoResizer } from 'react-base-table'
+import 'react-base-table/styles.css'
+import './items.css'
+import { dynamoDbScan } from '../asyncData/dynamoDb'
 
-function Table({ columns, data }) {
-  // Use the state and functions returned from useTable to build your UI
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page, // Instead of using 'rows', we'll use page,
-    // which has only the rows for the active page
-
-    // The rest of these things are super handy, too ;)
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize }
-  } = useTable(
-    {
-      columns,
-      data,
-      initialState: { pageIndex: 0 }
-    },
-    usePagination
-  )
-
-  // Render the UI for your table
-  return (
-    <>
-      <table {...getTableProps()}>
-        <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
-                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {page.map((row, i) => {
-            prepareRow(row)
-            return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map(cell => {
-                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                })}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-      {/* 
-        Pagination can be built however you'd like. 
-        This is just a very basic UI implementation:
-      */}
-      <div className="pagination">
-        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-          {'<<'}
-        </button>{' '}
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-          {'<'}
-        </button>{' '}
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
-          {'>'}
-        </button>{' '}
-        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-          {'>>'}
-        </button>{' '}
-        <span>
-          Page{' '}
-          <strong>
-            {pageIndex + 1} of {pageOptions.length}
-          </strong>{' '}
-        </span>
-        <span>
-          | Go to page:{' '}
-          <input
-            type="number"
-            defaultValue={pageIndex + 1}
-            onChange={e => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0
-              gotoPage(page)
-            }}
-            style={{ width: '100px' }}
-          />
-        </span>{' '}
-        <select
-          value={pageSize}
-          onChange={e => {
-            setPageSize(Number(e.target.value))
-          }}
-        >
-          {[10, 20, 30, 40, 50].map(pageSize => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-      </div>
-    </>
-  )
-}
-
-export function Items() {
-  const columns = React.useMemo(
-    () => [
+export class Items extends React.Component {
+  state = {
+    queries: [
       {
-        Header: 'Name',
-        columns: [
-          {
-            Header: 'First Name',
-            accessor: 'firstName'
-          },
-          {
-            Header: 'Last Name',
-            accessor: 'lastName'
-          }
-        ]
-      },
-      {
-        Header: 'Info',
-        columns: [
-          {
-            Header: 'Age',
-            accessor: 'age'
-          },
-          {
-            Header: 'Visits',
-            accessor: 'visits'
-          },
-          {
-            Header: 'Status',
-            accessor: 'status'
-          },
-          {
-            Header: 'Profile Progress',
-            accessor: 'progress'
-          }
-        ]
+        type: 'scan',
+        count: 0,
+        scannedCount: 0,
+        lastEvaluatedKey: null,
+        columns: [],
+        items: []
       }
     ],
-    []
-  )
+    activeQueryIndex: 0,
+    sortBy: {}
+  }
 
-  const arr = new Array(100).fill(0)
+  async fetchItems() {
+    const { queries, activeQueryIndex } = this.state
 
-  const data = arr.map((v, i) => ({
-    firstName: 'first' + i,
-    lastName: 'last',
-    age: Math.floor(Math.random() * 30),
-    visits: Math.floor(Math.random() * 100),
-    progress: Math.floor(Math.random() * 100),
-    status: 'complicated'
-  }))
+    const res = await dynamoDbScan({
+      lastEvaluatedKey: queries[activeQueryIndex].lastEvaluatedKey
+    })
 
-  return <Table columns={columns} data={data} />
+    this.setState({
+      queries: queries.map((query, index) => {
+        if (index !== activeQueryIndex) {
+          return query
+        } else {
+          return {
+            ...query,
+            count: query.count + res.count,
+            scannedCount: query.scannedCount + res.scannedCount,
+            items: [...query.items, ...res.items].map((item, index) => {
+              return {
+                ...item,
+                _slsConsoleKey: index
+              }
+            }),
+            // todo columns
+            columns: Object.keys(res.columns).map(column => {
+              const appPx = res.columns[column] * 12
+              return {
+                key: column,
+                dataKey: column,
+                title: column,
+                resizable: true,
+                sortable: true,
+                width: appPx < 70 ? 70 : appPx > 400 ? 400 : appPx
+              }
+            }),
+            lastEvaluatedKey: res.lastEvaluatedKey
+          }
+        }
+      })
+    })
+  }
+
+  componentDidMount() {
+    this.fetchItems()
+  }
+
+  onColumnSort = sortBy => {
+    console.log(sortBy)
+
+    /*this.setState({
+      data: this.state.data.reverse(),
+      sortBy
+    })*/
+  }
+
+  render() {
+    const query = this.state.queries[this.state.activeQueryIndex]
+    return (
+      <div className="table-wrapper">
+        <AutoResizer>
+          {({ width, height }) => (
+            <BaseTable
+              fixed
+              data={query.items}
+              columns={query.columns}
+              rowKey="_slsConsoleKey"
+              width={width}
+              height={height}
+              headerHeight={45}
+              rowHeight={40}
+              footerHeight={40}
+              sortBy={this.state.sortBy}
+              onColumnSort={this.onColumnSort}
+              footerRenderer={
+                <div>
+                  <span onClick={() => {}}>Load more</span>
+                </div>
+              }
+            />
+          )}
+        </AutoResizer>
+      </div>
+    )
+  }
 }

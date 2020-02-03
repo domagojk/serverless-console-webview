@@ -7,14 +7,15 @@
 
 .dynamodb-page .log-table-wrapper {
   position: fixed;
-  bottom: 15px;
+  bottom: 0px;
   right: 15px;
+  left: 15px;
   background: var(--vscode-sideBar-background);
   padding: 10px;
   border-radius: 5px;
 }
 .dynamodb-page .log-table-wrapper .table-wrapper {
-  max-height: 200px;
+  height: 200px;
   overflow: auto;
   margin-bottom: 15px;
 }
@@ -28,8 +29,14 @@
   align-items: center;
   justify-content: flex-end;
 }
+.dynamodb-page .log-table-wrapper .exec-footer .queue-message {
+  cursor: pointer;
+}
+.dynamodb-page .log-table-wrapper .exec-footer .queue-message:hover {
+  color: #1890ff;
+}
 .dynamodb-page .log-table-wrapper .exec-footer button {
-  margin-left: 20px;
+  margin-left: 10px;
   font-weight: 500;
   padding: 0 15px;
 }

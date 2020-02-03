@@ -8,7 +8,7 @@ import {
   LogStreamData,
   getLambdaOverview,
   setAutoRefresh
-} from '../asyncData'
+} from '../asyncData/asyncData'
 
 export class TabWrapper extends React.Component<{
   tab: any

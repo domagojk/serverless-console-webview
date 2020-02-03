@@ -1,18 +1,23 @@
 import './dynamoDb.css'
 import React from 'react'
-import { Tabs, Icon, Badge, Button } from 'antd'
+import { Tabs, Icon, Button } from 'antd'
 import { Items } from './Items'
 
 const { TabPane } = Tabs
 
 export class DynamoDb extends React.Component {
   state = {
-    execLogShown: true
+    execLogShown: false
   }
 
   render() {
+    let classNames = ''
+    if (this.state.execLogShown) {
+      classNames += 'exec-log-shown '
+    }
+
     return (
-      <div className="dynamodb-page">
+      <div className={`dynamodb-page ${classNames}`}>
         <div className="main-wrapper">
           <Tabs animated={false}>
             {[
@@ -30,76 +35,64 @@ export class DynamoDb extends React.Component {
           </Tabs>
         </div>
 
-        <div
-          className="log-table-wrapper"
-          style={{ left: this.state.execLogShown ? 15 : 'auto' }}
-        >
+        <div className="log-table-wrapper">
           {this.state.execLogShown && (
             <div className="table-wrapper">
               <table className="log-table">
-                <tr>
-                  <td>1 minute ago</td>
-                  <td>
-                    <span className="operation add">ADD</span>
-                  </td>
-                  <td>primary key</td>
-                  <td className="icons">
-                    <Icon type="delete" />
-                    <Icon type="code" />
-                  </td>
-                </tr>
+                <tbody>
+                  <tr>
+                    <td>1 minute ago</td>
+                    <td>
+                      <span className="operation add">ADD</span>
+                    </td>
+                    <td>primary key</td>
+                    <td className="icons">
+                      <Icon type="delete" />
+                      <Icon type="code" />
+                    </td>
+                  </tr>
 
-                <tr>
-                  <td>2 minutes ago</td>
-                  <td>
-                    <span className="operation edit">EDIT</span>
-                  </td>
-                  <td>primary key</td>
+                  <tr>
+                    <td>2 minutes ago</td>
+                    <td>
+                      <span className="operation edit">EDIT</span>
+                    </td>
+                    <td>primary key</td>
 
-                  <td className="icons">
-                    <Icon type="delete" />
-                    <Icon type="code" />
-                  </td>
-                </tr>
+                    <td className="icons">
+                      <Icon type="delete" />
+                      <Icon type="code" />
+                    </td>
+                  </tr>
 
-                <tr>
-                  <td>3 minutes ago</td>
-                  <td>
-                    <span className="operation delete">DELETE</span>
-                  </td>
-                  <td>primary key</td>
+                  <tr>
+                    <td>3 minutes ago</td>
+                    <td>
+                      <span className="operation delete">DELETE</span>
+                    </td>
+                    <td>primary key</td>
 
-                  <td className="icons">
-                    <Icon type="delete" />
-                    <Icon type="code" />
-                  </td>
-                </tr>
+                    <td className="icons">
+                      <Icon type="delete" />
+                      <Icon type="code" />
+                    </td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           )}
 
           <div className="exec-footer">
-            <Badge
-              count={5}
-              title="Staged changes"
-              style={{
-                boxShadow: 'none',
-                backgroundColor: 'rgb(0, 122, 204)'
+            <span
+              className="queue-message"
+              onClick={() => {
+                this.setState({
+                  execLogShown: !this.state.execLogShown
+                })
               }}
             >
-              <Icon
-                onClick={() => {
-                  this.setState({
-                    execLogShown: !this.state.execLogShown
-                  })
-                }}
-                type="ordered-list"
-                style={{
-                  fontSize: 20,
-                  opacity: this.state.execLogShown ? 1 : 0.6
-                }}
-              />
-            </Badge>
+              <b>4</b> commands in queue
+            </span>
 
             <Button type="primary" size="small">
               Run

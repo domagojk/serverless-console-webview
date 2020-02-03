@@ -16,6 +16,8 @@ declare global {
   }
 }
 
+document.vscodeData.page = 'dynamoDb'
+
 ReactDOM.render(
   document.vscodeData.page === 'createService' ? (
     <CreateServicePage />

@@ -21,7 +21,7 @@ try {
   vscode = acquireVsCodeApi()
 } catch (err) {}
 
-let subscriptions: Record<string, any> = {}
+export let subscriptions: Record<string, any> = {}
 
 window.addEventListener('message', event => {
   const message = event.data

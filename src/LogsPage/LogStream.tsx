@@ -1,5 +1,5 @@
 import React from 'react'
-import { getLogEvents } from '../asyncData'
+import { getLogEvents } from '../asyncData/asyncData'
 import { Collapse, Checkbox, Input } from 'antd'
 import moment from 'moment'
 import { LogEvent } from './LogEvent'

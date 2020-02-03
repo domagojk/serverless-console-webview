@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { listCloudFormationStacks } from '../../asyncData'
+import { listCloudFormationStacks } from '../../asyncData/asyncData'
 import { Select } from 'antd'
 import { RegionSelect } from '../RegionSelect'
 const { Option } = Select
