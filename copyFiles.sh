@@ -2,7 +2,7 @@
 cd build/static/js
 
 counter=1
-for file in *
+for file in *.js
 do
    extension="${file##*.}"
    cp $file ../../../../serverless-monitor/resources/webview/build/static/js/main${counter}.${extension}
@@ -12,7 +12,7 @@ done
 cd ../css
 
 counter=1
-for file in *
+for file in *.css
 do
    extension="${file##*.}"
    cp $file ../../../../serverless-monitor/resources/webview/build/static/css/main${counter}.${extension}

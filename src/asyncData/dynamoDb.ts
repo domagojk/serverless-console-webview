@@ -1,6 +1,24 @@
 // todo: remove for production
 import { DynamoDB } from 'aws-sdk'
 
+export async function dynamoDbTableDesc() {
+  const dynamo = new DynamoDB({
+    credentials: {
+      accessKeyId: '',
+      secretAccessKey: ''
+    },
+    region: 'eu-west-1'
+  })
+
+  const res = await dynamo
+    .describeTable({
+      TableName: 'eventstore-trainingtube'
+    })
+    .promise()
+
+  return res.Table
+}
+
 export async function dynamoDbScan({
   lastEvaluatedKey,
   limit = 100
@@ -16,8 +34,8 @@ export async function dynamoDbScan({
 }> {
   const dynamo = new DynamoDB.DocumentClient({
     credentials: {
-      accessKeyId: 'AKIAIBCVFIWOOPCMOASQ',
-      secretAccessKey: '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'
+      accessKeyId: '',
+      secretAccessKey: ''
     },
     region: 'eu-west-1'
   })
@@ -30,6 +48,7 @@ export async function dynamoDbScan({
     })
     .promise()
 
+  let countPerColumn = {}
   let columns = {}
   res.Items.forEach(item => {
     // loop trough all items and get column header
@@ -37,14 +56,16 @@ export async function dynamoDbScan({
       // calculate size of the string
       let size = String(item[itemKey]).length
       if (columns[itemKey] === undefined) {
+        countPerColumn[itemKey] = 0
         columns[itemKey] = 0
       }
       columns[itemKey] += size
+      countPerColumn[itemKey] += 1
     })
   })
   Object.keys(columns).forEach(column => {
     // set column recommended width
-    const avg = Math.round(columns[column] / res.Count)
+    const avg = Math.round(columns[column] / countPerColumn[column])
     columns[column] = column.length > avg ? column.length : avg
   })
 

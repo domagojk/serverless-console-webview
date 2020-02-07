@@ -2,17 +2,20 @@
   margin: 0px;
 }
 .dynamodb-page .main-wrapper {
-  padding: 5px;
-}
-
-.dynamodb-page .log-table-wrapper {
+  padding: 0;
   position: fixed;
-  bottom: 0px;
-  right: 15px;
-  left: 15px;
-  background: var(--vscode-sideBar-background);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dynamodb-page .query-form {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
   padding: 10px;
-  border-radius: 5px;
 }
 .dynamodb-page .log-table-wrapper .table-wrapper {
   height: 200px;
@@ -22,23 +25,32 @@
 .dynamodb-page .log-table {
   width: 100%;
 }
-.dynamodb-page .log-table-wrapper .exec-footer {
-  text-align: right;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-}
-.dynamodb-page .log-table-wrapper .exec-footer .queue-message {
+
+.dynamodb-page .footer-right .queue-message {
   cursor: pointer;
 }
-.dynamodb-page .log-table-wrapper .exec-footer .queue-message:hover {
+.dynamodb-page .footer-right .queue-message:hover {
   color: #1890ff;
 }
-.dynamodb-page .log-table-wrapper .exec-footer button {
+.dynamodb-page .footer-right button {
   margin-left: 10px;
   font-weight: 500;
   padding: 0 15px;
+  background: var(--vscode-button-background);
+  border-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+.dynamodb-page .footer-right button:hover {
+  background: var(--vscode-button-hoverBackground);
+  border-color: var(--vscode-button-hoverBackground);
+}
+.dynamodb-page .footer-right .commands-num {
+  padding: 1px 5px;
+  color: var(--vscode-button-background);
+  background: var(--vscode-button-foreground);
+  font-weight: bold;
+  border-radius: 12px;
+  margin-right: 2px;
 }
 
 .dynamodb-page .log-table tr {
@@ -63,4 +75,75 @@
 }
 .dynamodb-page .log-table .operation.delete {
   color: rgb(199, 78, 57);
+}
+.dynamodb-page .footer-wrapper {
+  display: flex;
+  justify-content: space-between;
+  height: 100%;
+  align-items: center;
+  background: var(--vscode-sideBar-background);
+  padding: 0 10px;
+  font-size: 0.95em;
+}
+.dynamodb-page .footer-wrapper .footer-center {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+}
+.dynamodb-page .footer-wrapper .footer-left,
+.dynamodb-page .footer-wrapper .footer-right {
+  flex: 0 0 25%;
+  height: 100%;
+  align-items: center;
+  display: flex;
+}
+.dynamodb-page .footer-right {
+  justify-content: flex-end;
+}
+.dynamodb-page .footer-wrapper .loadmore {
+  margin: 0 10px;
+}
+.dynamodb-page .BaseTable {
+  font-size: 1em;
+}
+.dynamodb-page .BaseTable__row-cell:hover .BaseTable__row-cell-text {
+  background: var(--vscode-editor-selectionBackground);
+  cursor: default;
+}
+
+.dynamodb-page .firstcell i {
+  padding: 0 2px;
+  font-size: 15px;
+}
+.dynamodb-page .BaseTable__row {
+  user-select: none;
+}
+.dynamodb-page .BaseTable__row--hovered .firstcell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.dynamodb-page .firstcell {
+  display: none;
+}
+.dynamodb-page .ant-checkbox-inner,
+.dynamodb-page .ant-checkbox-input:focus + .ant-checkbox-inner {
+  background-color: transparent;
+  border: 1px solid var(--vscode-checkbox-border);
+}
+
+.dynamodb-page .footer-left i {
+  font-size: 16px;
+  margin: 0 5px;
+}
+.dynamodb-page .table-wrapper {
+  flex-grow: 1;
+}
+
+.dynamodb-page .ant-collapse-item {
+  padding: 5px;
+}
+.dynamodb-page .ant-collapse {
+  background-color: var(--vscode-editor-background);
+  border: 0;
 }

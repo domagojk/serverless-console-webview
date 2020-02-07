@@ -1,9 +1,7 @@
 import './dynamoDb.css'
 import React from 'react'
-import { Tabs, Icon, Button } from 'antd'
+import { Icon, Collapse } from 'antd'
 import { Items } from './Items'
-
-const { TabPane } = Tabs
 
 export class DynamoDb extends React.Component {
   state = {
@@ -19,20 +17,29 @@ export class DynamoDb extends React.Component {
     return (
       <div className={`dynamodb-page ${classNames}`}>
         <div className="main-wrapper">
-          <Tabs animated={false}>
-            {[
-              {
-                title: 'items'
-              },
-              {
-                title: 'overview'
-              }
-            ].map((tab: any) => (
-              <TabPane tab={tab.title} key={tab.title}>
-                <Items />
-              </TabPane>
-            ))}
-          </Tabs>
+          <div className="query-form">
+            <Collapse>
+              <Collapse.Panel
+                header={
+                  <div>
+                    <span
+                      style={{
+                        fontWeight: 'bold',
+                        marginRight: 30
+                      }}
+                    >
+                      scan
+                    </span>
+                    <span>trainingtube-eventstore</span>
+                  </div>
+                }
+                key="1"
+              >
+                <p>asas</p>
+              </Collapse.Panel>
+            </Collapse>
+          </div>
+          <Items />
         </div>
 
         <div className="log-table-wrapper">
@@ -81,23 +88,6 @@ export class DynamoDb extends React.Component {
               </table>
             </div>
           )}
-
-          <div className="exec-footer">
-            <span
-              className="queue-message"
-              onClick={() => {
-                this.setState({
-                  execLogShown: !this.state.execLogShown
-                })
-              }}
-            >
-              <b>4</b> commands in queue
-            </span>
-
-            <Button type="primary" size="small">
-              Run
-            </Button>
-          </div>
         </div>
       </div>
     )
