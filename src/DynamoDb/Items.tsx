@@ -18,6 +18,7 @@ export class Items extends React.Component {
         items: []
       }
     ],
+    isFooterExpanded: false,
     defaultColumns: [],
     selectedRows: [],
     lastSelected: null,
@@ -159,7 +160,7 @@ export class Items extends React.Component {
               height={height}
               headerHeight={35}
               rowHeight={35}
-              footerHeight={40}
+              footerHeight={this.state.isFooterExpanded ? 240 : 40}
               sortBy={this.state.sortBy}
               onColumnSort={this.onColumnSort}
               rowClassName={({ rowIndex }) => {
@@ -188,37 +189,96 @@ export class Items extends React.Component {
                 }
               }}
               footerRenderer={
-                <div className="footer-wrapper">
-                  <div className="footer-left">
-                    <Icon type="plus-circle" />
-                    <Icon type="reload" />
-                    <Icon type="setting" />
-                  </div>
-                  <div className="footer-center">
-                    <span>
-                      Fetched {query.count} items ({query.scannedCount} scanned)
-                    </span>
-                    {query.isLoading ? (
-                      <span className="loadmore">loading...</span>
-                    ) : (
+                <div>
+                  {this.state.isFooterExpanded && (
+                    <div className="log-table-wrapper">
+                      <div className="table-wrapper">
+                        <table className="log-table">
+                          <tbody>
+                            <tr>
+                              <td className="operation">
+                                <span className="add">ADD</span>
+                              </td>
+                              <td>1 minute ago</td>
+
+                              <td>primary key</td>
+                              <td className="icons">
+                                <Icon type="delete" />
+                                <Icon type="code" />
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td className="operation">
+                                <span className="edit">EDIT</span>
+                              </td>
+                              <td>2 minutes ago</td>
+                              <td>primary key</td>
+
+                              <td className="icons">
+                                <Icon type="delete" />
+                                <Icon type="code" />
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td className="operation">
+                                <span className="delete">DELETE</span>
+                              </td>
+                              <td>3 minutes ago</td>
+                              <td>primary key</td>
+
+                              <td className="icons">
+                                <Icon type="delete" />
+                                <Icon type="code" />
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                  <div className="footer-wrapper">
+                    <div className="footer-left">
+                      <Icon type="plus-circle" />
+                      <Icon type="reload" />
+                      <Icon type="setting" />
+                    </div>
+                    <div className="footer-center">
+                      <span>
+                        Fetched {query.count} items ({query.scannedCount}{' '}
+                        scanned)
+                      </span>
+                      {query.isLoading ? (
+                        <span className="loadmore">loading...</span>
+                      ) : (
+                        <span
+                          className="spanlink loadmore"
+                          onClick={() => {
+                            this.fetchItems()
+                          }}
+                        >
+                          Load more
+                        </span>
+                      )}
+                    </div>
+                    <div className="footer-right">
                       <span
-                        className="spanlink loadmore"
+                        className="queue-message"
                         onClick={() => {
-                          this.fetchItems()
+                          this.setState({
+                            isFooterExpanded: !this.state.isFooterExpanded
+                          })
                         }}
                       >
-                        Load more
+                        <span className="commands-num">4</span> commands in
+                        queue
                       </span>
-                    )}
-                  </div>
-                  <div className="footer-right">
-                    <span className="queue-message">
-                      <span className="commands-num">4</span> commands in queue
-                    </span>
 
-                    <Button type="primary" size="small">
-                      Run
-                    </Button>
+                      <Button type="primary" size="small">
+                        Run
+                      </Button>
+                    </div>
                   </div>
                 </div>
               }

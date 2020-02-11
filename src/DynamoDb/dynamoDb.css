@@ -17,10 +17,15 @@
   flex-direction: row;
   padding: 10px;
 }
-.dynamodb-page .log-table-wrapper .table-wrapper {
+.dynamodb-page .log-table-wrapper {
   height: 200px;
+  padding: 10px;
+  padding-bottom: 0;
+}
+.dynamodb-page .log-table-wrapper .table-wrapper {
+  height: 180px;
+  z-index: 1;
   overflow: auto;
-  margin-bottom: 15px;
 }
 .dynamodb-page .log-table {
   width: 100%;
@@ -56,7 +61,6 @@
 .dynamodb-page .log-table tr {
   border-bottom: 1px solid var(--vscode-checkbox-border);
   height: 30px;
-  font-size: 0.9em;
 }
 .dynamodb-page .log-table tr:last-child {
   border-bottom: 0;
@@ -67,28 +71,35 @@
 .dynamodb-page .log-table .icons i {
   padding-right: 10px;
 }
-.dynamodb-page .log-table .operation.add {
+.dynamodb-page .log-table .operation {
+  width: 100px;
+  font-weight: bold;
+}
+.dynamodb-page .log-table .operation .add {
   color: rgb(115, 201, 145);
 }
-.dynamodb-page .log-table .operation.edit {
+.dynamodb-page .log-table .operation .edit {
   color: rgb(226, 192, 141);
 }
-.dynamodb-page .log-table .operation.delete {
+.dynamodb-page .log-table .operation .delete {
   color: rgb(199, 78, 57);
 }
 .dynamodb-page .footer-wrapper {
   display: flex;
   justify-content: space-between;
-  height: 100%;
-  align-items: center;
-  background: var(--vscode-sideBar-background);
+  height: 40px;
+  align-items: flex-end;
   padding: 0 10px;
-  font-size: 0.95em;
+}
+.dynamodb-page .BaseTable__footer {
+  background: var(--vscode-sideBar-background);
 }
 .dynamodb-page .footer-wrapper .footer-center {
   flex: 1 1 auto;
   display: flex;
   justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 .dynamodb-page .footer-wrapper .footer-left,
 .dynamodb-page .footer-wrapper .footer-right {
