@@ -110,6 +110,7 @@
 }
 .dynamodb-page .footer-right {
   justify-content: flex-end;
+  min-width: 220px;
 }
 .dynamodb-page .footer-wrapper .loadmore {
   margin: 0 10px;
