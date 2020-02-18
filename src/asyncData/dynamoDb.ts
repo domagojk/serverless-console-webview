@@ -1,5 +1,6 @@
 // todo: remove for production
 import { DynamoDB } from 'aws-sdk'
+import { vscode } from './asyncData'
 
 export async function dynamoDbTableDesc() {
   const dynamo = new DynamoDB({
@@ -7,12 +8,12 @@ export async function dynamoDbTableDesc() {
       accessKeyId: '',
       secretAccessKey: ''
     },
-    region: 'eu-west-1'
+    region: 'us-east-1'
   })
 
   const res = await dynamo
     .describeTable({
-      TableName: 'eventstore-trainingtube'
+      TableName: 'eventstore'
     })
     .promise()
 
@@ -29,6 +30,7 @@ export async function dynamoDbScan({
   items: any[]
   count: number
   columns: Record<string, number>
+  countPerColumn: Record<string, number>
   scannedCount: number
   lastEvaluatedKey?: any
 }> {
@@ -37,12 +39,12 @@ export async function dynamoDbScan({
       accessKeyId: '',
       secretAccessKey: ''
     },
-    region: 'eu-west-1'
+    region: 'us-east-1'
   })
 
   const res = await dynamo
     .scan({
-      TableName: 'eventstore-trainingtube',
+      TableName: 'eventstore',
       Limit: limit,
       ExclusiveStartKey: lastEvaluatedKey
     })
@@ -74,6 +76,21 @@ export async function dynamoDbScan({
     count: res.Count,
     columns,
     scannedCount: res.ScannedCount,
+    countPerColumn,
     lastEvaluatedKey: res.LastEvaluatedKey
   }
+}
+
+export function openJSON(payload: {
+  content: any
+  tableName?: string,
+  hashKey?: string,
+  sortKey?: string
+  selectColumn?: string
+  columns?: string[]
+}) {
+  vscode.postMessage({
+    command: 'openJSON',
+    payload
+  })
 }

@@ -15,11 +15,12 @@
   display: flex;
   align-items: center;
   flex-direction: row;
-  padding: 10px;
+  padding: 15px 10px;
+  cursor: pointer;
 }
 .dynamodb-page .log-table-wrapper {
   height: 200px;
-  padding: 10px;
+  padding: 10px 15px;
   padding-bottom: 0;
 }
 .dynamodb-page .log-table-wrapper .table-wrapper {
@@ -51,9 +52,8 @@
 }
 .dynamodb-page .footer-right .commands-num {
   padding: 1px 5px;
-  color: var(--vscode-button-background);
-  background: var(--vscode-button-foreground);
-  font-weight: bold;
+  color: var(--vscode-activityBarBadge-foreground);
+  background: var(--vscode-activityBarBadge-background);
   border-radius: 12px;
   margin-right: 2px;
 }
@@ -75,15 +75,22 @@
   width: 100px;
   font-weight: bold;
 }
-.dynamodb-page .log-table .operation .add {
+.dynamodb-page .log-table .operation i {
+  padding-right: 5px;
+}
+.dynamodb-page .log-table .timestamp {
+  width: 150px;
+}
+.dynamodb-page .log-table .operation .add i {
   color: rgb(115, 201, 145);
 }
-.dynamodb-page .log-table .operation .edit {
+.dynamodb-page .log-table .operation .edit i {
   color: rgb(226, 192, 141);
 }
-.dynamodb-page .log-table .operation .delete {
+.dynamodb-page .log-table .operation .delete i {
   color: rgb(199, 78, 57);
 }
+
 .dynamodb-page .footer-wrapper {
   display: flex;
   justify-content: space-between;
@@ -123,9 +130,9 @@
   cursor: default;
 }
 
-.dynamodb-page .firstcell i {
-  padding: 0 2px;
-  font-size: 15px;
+.dynamodb-page .firstcell svg {
+  margin: 0 4px;
+  font-size: 13px;
 }
 .dynamodb-page .BaseTable__row {
   user-select: none;
@@ -159,3 +166,4 @@
   background-color: var(--vscode-editor-background);
   border: 0;
 }
+

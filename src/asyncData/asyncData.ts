@@ -12,7 +12,7 @@ export type LogStreamData = {
   arn: string
 }
 
-let vscode = {
+export let vscode = {
   postMessage: console.log
 }
 

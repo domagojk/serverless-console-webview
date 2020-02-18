@@ -2,11 +2,21 @@ import React from 'react'
 import BaseTable, { AutoResizer } from 'react-base-table'
 import 'react-base-table/styles.css'
 import './items.css'
-import { dynamoDbScan, dynamoDbTableDesc } from '../asyncData/dynamoDb'
-import { Icon, Tooltip, Checkbox, Button } from 'antd'
+import {
+  dynamoDbScan,
+  dynamoDbTableDesc,
+  openJSON
+} from '../asyncData/dynamoDb'
+import { Icon, Checkbox, Button } from 'antd'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExternalLinkAlt, faKey } from '@fortawesome/free-solid-svg-icons'
+import { library } from '@fortawesome/fontawesome-svg-core'
+
+library.add(faExternalLinkAlt, faKey)
 
 export class Items extends React.Component {
   state = {
+    queryFormVisible: false,
     queries: [
       {
         isLoading: false,
@@ -15,9 +25,13 @@ export class Items extends React.Component {
         scannedCount: 0,
         lastEvaluatedKey: null,
         columns: [],
+        originalItems: [],
         items: []
       }
     ],
+    tableName: '',
+    hashKey: '',
+    sortKey: '',
     isFooterExpanded: false,
     defaultColumns: [],
     selectedRows: [],
@@ -52,43 +66,50 @@ export class Items extends React.Component {
           let columnNames =
             query.columns.length === 0
               ? this.state.defaultColumns
-              : query.columns
-                  .map(c => c.key)
-                  .filter(
-                    key => key !== '__selection__' && key !== '__options__'
-                  )
+              : query.columns.map(c => c.key)
 
-          Object.keys(res.columns).forEach(column => {
-            if (!columnNames.includes(column)) {
-              // push new column if not found in previous query
-              // can not just use res.columns because the order of columns
-              // is not preserved in that case
-              columnNames.push(column)
-            }
-          })
+          Object.keys(res.countPerColumn)
+            .sort((a, b) => {
+              return res.countPerColumn[b] - res.countPerColumn[a]
+            })
+            .forEach(column => {
+              if (!columnNames.includes(column)) {
+                // push new column if not found in previous query
+                // can not just use res.columns because the order of columns
+                // is not preserved in that case
+                columnNames.push(column)
+              }
+            })
 
           return {
             ...query,
             isLoading: false,
             count: query.count + res.count,
             scannedCount: query.scannedCount + res.scannedCount,
+            originalItems: [...query.originalItems, ...res.items],
             items: [...query.items, ...res.items].map((item, index) => {
+              const stringified = Object.keys(item).reduce((acc, curr) => {
+                return {
+                  ...acc,
+                  [curr]:
+                    typeof item[curr] === 'object'
+                      ? JSON.stringify(item[curr], null, 2)
+                      : item[curr]
+                }
+              }, {})
+
               return {
-                ...item,
+                ...stringified,
                 _slsConsoleKey: index
               }
             }),
             columns: [
-              {
-                width: 40,
-                flexShrink: 0,
-                resizable: false,
-                frozen: 'left',
-                cellRenderer: () => <Checkbox />,
-                key: '__selection__'
-              },
               ...columnNames.map(column => {
-                const appPx = res.columns[column] * 12
+                const prevColumn = query.columns.find(c => c.key === column)
+                if (prevColumn) {
+                  return prevColumn
+                }
+                const appPx = Math.round(res.columns[column] * 8.5)
 
                 return {
                   key: column,
@@ -98,20 +119,7 @@ export class Items extends React.Component {
                   sortable: true,
                   width: appPx < 70 ? 70 : appPx > 400 ? 400 : appPx
                 }
-              }),
-              {
-                width: 50,
-                flexShrink: 0,
-                resizable: false,
-                frozen: 'right',
-                cellRenderer: () => (
-                  <div className="firstcell">
-                    <Icon type="copy" />
-                    <Icon type="edit" />
-                  </div>
-                ),
-                key: '__options__'
-              }
+              })
             ],
             lastEvaluatedKey: res.lastEvaluatedKey
           }
@@ -128,6 +136,9 @@ export class Items extends React.Component {
     const range = tableDesc.KeySchema.find(key => key.KeyType === 'RANGE')
 
     this.setState({
+      tableName: tableDesc.TableName,
+      hashKey: hashKey && hashKey.AttributeName ? hashKey.AttributeName : null,
+      sortKey: range ? range.AttributeName && range.AttributeName : null,
       defaultColumns: [hashKey.AttributeName, range?.AttributeName].filter(
         val => !!val
       )
@@ -148,37 +159,76 @@ export class Items extends React.Component {
     const query = this.state.queries[this.state.activeQueryIndex]
 
     return (
-      <div className="table-wrapper">
-        <AutoResizer>
-          {({ width, height }) => (
-            <BaseTable
-              fixed
-              data={query.items}
-              columns={query.columns}
-              rowKey="_slsConsoleKey"
-              width={width}
-              height={height}
-              headerHeight={35}
-              rowHeight={35}
-              footerHeight={this.state.isFooterExpanded ? 240 : 40}
-              sortBy={this.state.sortBy}
-              onColumnSort={this.onColumnSort}
-              rowClassName={({ rowIndex }) => {
-                return this.state.selectedRows.includes(rowIndex)
-                  ? 'selected'
-                  : ''
-              }}
-              rowEventHandlers={{
-                onClick: ({ rowIndex, rowKey, rowData, event }) => {
-                  console.log(
-                    rowIndex,
-                    rowKey,
-                    rowData,
-                    event.screenX,
-                    event.screenY
-                  )
+      <>
+        <div
+          className="query-form"
+          onClick={() => {
+            this.setState({ queryFormVisible: !this.state.queryFormVisible })
+          }}
+        >
+          <Icon type="right" />
+          <span
+            style={{
+              fontWeight: 'bold',
+              marginRight: 30,
+              marginLeft: 5
+            }}
+          >
+            scan
+          </span>
+          <span>[Table] eventstore: streamId, version</span>
+        </div>
+        {this.state.queryFormVisible && (
+          <div className="query-form-options">aasas</div>
+        )}
+        <div className="table-wrapper">
+          <AutoResizer>
+            {({ width, height }) => (
+              <BaseTable
+                fixed
+                data={query.items}
+                columns={query.columns}
+                rowKey="_slsConsoleKey"
+                width={width}
+                height={height}
+                headerHeight={35}
+                rowHeight={35}
+                footerHeight={this.state.isFooterExpanded ? 240 : 40}
+                sortBy={this.state.sortBy}
+                onColumnSort={this.onColumnSort}
+                rowClassName={({ rowIndex }) => {
+                  return this.state.selectedRows.includes(rowIndex)
+                    ? 'selected'
+                    : ''
+                }}
+                cellProps={({ column, rowData }) => ({
+                  onDoubleClick: e => {
+                    openJSON({
+                      content: query.originalItems[rowData._slsConsoleKey],
+                      selectColumn: column.dataKey,
+                      columns: query.columns.map(c => c.key),
+                      hashKey: this.state.hashKey,
+                      sortKey: this.state.sortKey,
+                      tableName: this.state.tableName
+                    })
+                  }
+                })}
+                rowEventHandlers={{
+                  onContextMenu: () => {
+                    console.log('right click')
+                  },
+                  onClick: ({ rowIndex, rowKey, rowData, event }) => {
+                    console.log(
+                      rowIndex,
+                      rowKey,
+                      rowData,
+                      event.screenX,
+                      event.screenY,
+                      event.metaKey,
+                      event.shiftKey
+                    )
 
-                  /*this.setState({
+                    /*this.setState({
                     selectedRows: this.state.selectedRows.includes(rowIndex)
                       ? this.state.selectedRows.filter(
                           index => index !== rowIndex
@@ -186,106 +236,114 @@ export class Items extends React.Component {
                       : [...this.state.selectedRows, rowIndex],
                     lastSelected: rowIndex
                   })*/
-                }
-              }}
-              footerRenderer={
-                <div>
-                  {this.state.isFooterExpanded && (
-                    <div className="log-table-wrapper">
-                      <div className="table-wrapper">
-                        <table className="log-table">
-                          <tbody>
-                            <tr>
-                              <td className="operation">
-                                <span className="add">ADD</span>
-                              </td>
-                              <td>1 minute ago</td>
+                  }
+                }}
+                footerRenderer={
+                  <div>
+                    {this.state.isFooterExpanded && (
+                      <div className="log-table-wrapper">
+                        <div className="table-wrapper">
+                          <table className="log-table">
+                            <tbody>
+                              <tr>
+                                <td className="operation">
+                                  <span className="add">
+                                    <Icon type="plus-circle" /> ADD
+                                  </span>
+                                </td>
+                                <td className="timestamp">1 minute ago</td>
+                                <td className="primary-key">primary key</td>
+                                <td className="icons">
+                                  <Icon type="info-circle" />
+                                  <Icon type="close" />
+                                </td>
+                              </tr>
 
-                              <td>primary key</td>
-                              <td className="icons">
-                                <Icon type="delete" />
-                                <Icon type="code" />
-                              </td>
-                            </tr>
+                              <tr>
+                                <td className="operation">
+                                  <span className="edit">
+                                    <Icon type="edit" /> EDIT
+                                  </span>
+                                </td>
+                                <td className="timestamp">2 minutes ago</td>
+                                <td className="primary-key">primary key</td>
 
-                            <tr>
-                              <td className="operation">
-                                <span className="edit">EDIT</span>
-                              </td>
-                              <td>2 minutes ago</td>
-                              <td>primary key</td>
+                                <td className="icons">
+                                  <Icon type="info-circle" />
+                                  <Icon type="close" />
+                                </td>
+                              </tr>
 
-                              <td className="icons">
-                                <Icon type="delete" />
-                                <Icon type="code" />
-                              </td>
-                            </tr>
+                              <tr>
+                                <td className="operation">
+                                  <span className="delete">
+                                    <Icon type="close-circle" /> DELETE
+                                  </span>
+                                </td>
+                                <td className="timestamp">3 minutes ago</td>
+                                <td className="primary-key">primary key</td>
 
-                            <tr>
-                              <td className="operation">
-                                <span className="delete">DELETE</span>
-                              </td>
-                              <td>3 minutes ago</td>
-                              <td>primary key</td>
-
-                              <td className="icons">
-                                <Icon type="delete" />
-                                <Icon type="code" />
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                                <td className="icons">
+                                  <Icon type="info-circle" />
+                                  <Icon type="close" />
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  <div className="footer-wrapper">
-                    <div className="footer-left">
-                      <Icon type="plus-circle" />
-                      <Icon type="reload" />
-                      <Icon type="setting" />
-                    </div>
-                    <div className="footer-center">
-                      <span>
-                        Fetched {query.count} items ({query.scannedCount}{' '}
-                        scanned)
-                      </span>
-                      {query.isLoading ? (
-                        <span className="loadmore">loading...</span>
-                      ) : (
+                    )}
+                    <div className="footer-wrapper">
+                      <div className="footer-left">
+                        <Icon type="plus-circle" />
+                        <Icon type="reload" />
+                        <Icon type="setting" />
+                      </div>
+                      <div className="footer-center">
+                        <span>
+                          Fetched {query.count} items ({query.scannedCount}{' '}
+                          scanned)
+                        </span>
+                        {query.isLoading ? (
+                          <span className="loadmore">loading...</span>
+                        ) : (
+                          query.lastEvaluatedKey && (
+                            <span
+                              className="spanlink loadmore"
+                              onClick={() => {
+                                this.fetchItems()
+                              }}
+                            >
+                              Load more
+                            </span>
+                          )
+                        )}
+                      </div>
+                      <div className="footer-right">
                         <span
-                          className="spanlink loadmore"
+                          className="queue-message"
                           onClick={() => {
-                            this.fetchItems()
+                            this.setState({
+                              isFooterExpanded: !this.state.isFooterExpanded
+                            })
                           }}
                         >
-                          Load more
+                          <span className="commands-num">4</span> commands in
+                          queue
                         </span>
-                      )}
-                    </div>
-                    <div className="footer-right">
-                      <span
-                        className="queue-message"
-                        onClick={() => {
-                          this.setState({
-                            isFooterExpanded: !this.state.isFooterExpanded
-                          })
-                        }}
-                      >
-                        <span className="commands-num">4</span> commands in
-                        queue
-                      </span>
 
-                      <Button type="primary" size="small">
-                        Run
-                      </Button>
+                        <Button type="primary" size="small">
+                          Run
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              }
-            />
-          )}
-        </AutoResizer>
-      </div>
+                }
+              />
+            )}
+          </AutoResizer>
+        </div>
+      </>
     )
   }
 }
