@@ -166,4 +166,23 @@
   background-color: var(--vscode-editor-background);
   border: 0;
 }
-
+.dynamodb-page .ant-radio-button-wrapper {
+  font-size: 0.85em;
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border-color: var(--vscode-checkbox-border);
+  opacity: 0.7;
+  box-shadow: none;
+}
+.dynamodb-page .ant-radio-button-wrapper:hover {
+  box-shadow: none;
+}
+.dynamodb-page .ant-radio-button-wrapper.ant-radio-button-wrapper-checked {
+  background: var(--vscode-button-background);
+  border-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  opacity: 1;
+}
+.dynamodb-page .scan-query-group {
+  margin-right: 20px;
+}

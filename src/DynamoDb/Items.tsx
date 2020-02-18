@@ -7,7 +7,16 @@ import {
   dynamoDbTableDesc,
   openJSON
 } from '../asyncData/dynamoDb'
-import { Icon, Checkbox, Button } from 'antd'
+import {
+  Icon,
+  Checkbox,
+  Button,
+  AutoComplete,
+  Input,
+  Dropdown,
+  Menu,
+  Radio
+} from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExternalLinkAlt, faKey } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -157,29 +166,80 @@ export class Items extends React.Component {
 
   render() {
     const query = this.state.queries[this.state.activeQueryIndex]
+    console.log(query.columns)
 
     return (
       <>
-        <div
-          className="query-form"
-          onClick={() => {
-            this.setState({ queryFormVisible: !this.state.queryFormVisible })
-          }}
-        >
-          <Icon type="right" />
-          <span
-            style={{
-              fontWeight: 'bold',
-              marginRight: 30,
-              marginLeft: 5
-            }}
+        <div className="query-form">
+          <Radio.Group defaultValue="scan" className="scan-query-group" size="small">
+            <Radio.Button value="scan">Scan</Radio.Button>
+            <Radio.Button value="query">Query</Radio.Button>
+          </Radio.Group>
+
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="http://www.alipay.com/"
+                  >
+                    1st menu item
+                  </a>
+                </Menu.Item>
+                <Menu.Item>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="http://www.taobao.com/"
+                  >
+                    2nd menu item
+                  </a>
+                </Menu.Item>
+                <Menu.Item>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="http://www.tmall.com/"
+                  >
+                    3rd menu item
+                  </a>
+                </Menu.Item>
+              </Menu>
+            }
           >
-            scan
-          </span>
-          <span>[Table] eventstore: streamId, version</span>
+            <span style={{ marginRight: 10 }}>
+              [Table] eventstore: streamId, version
+              <Icon type="down" />
+            </span>
+          </Dropdown>
+          <Icon
+            type="plus-circle"
+            onClick={() => {
+              this.setState({
+                queryFormVisible: !this.state.queryFormVisible
+              })
+            }}
+          />
         </div>
         {this.state.queryFormVisible && (
-          <div className="query-form-options">aasas</div>
+          <div className="query-form-options">
+            <AutoComplete
+              style={{ width: 100, marginRight: 5 }}
+              dataSource={query.columns.map(c => c.key)}
+              placeholder="Field name"
+            />
+            <AutoComplete
+              style={{ width: 100, marginRight: 5 }}
+              dataSource={['Begins with', '=', '>', '<']}
+              value="Begins with"
+            />
+            <Input
+              style={{ width: 100, marginRight: 5 }}
+              placeholder="Field value"
+            />
+          </div>
         )}
         <div className="table-wrapper">
           <AutoResizer>
