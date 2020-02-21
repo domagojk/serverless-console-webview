@@ -9,23 +9,33 @@ import {
 } from '../asyncData/dynamoDb'
 import {
   Icon,
-  Checkbox,
   Button,
   AutoComplete,
   Input,
   Dropdown,
   Menu,
-  Radio
+  Radio,
+  Tooltip
 } from 'antd'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExternalLinkAlt, faKey } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
+import { RelativeTime } from '../LogsPage/RelativeTime'
 
 library.add(faExternalLinkAlt, faKey)
 
 export class Items extends React.Component {
   state = {
-    queryFormVisible: false,
+    queryFilterVisible: true,
+    queryFilters: [
+      {
+        id: Math.random()
+      }
+    ],
+    commands: [] as {
+      type: 'add' | 'edit' | 'delete'
+      id: string
+      timestamp: number
+    }[],
     queries: [
       {
         isLoading: false,
@@ -47,6 +57,27 @@ export class Items extends React.Component {
     lastSelected: null,
     activeQueryIndex: 0,
     sortBy: {}
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      !this.state.isFooterExpanded &&
+      this.state.commands.length !== 0 &&
+      prevState.commands.length !== this.state.commands.length
+    ) {
+      this.setState({
+        isFooterExpanded: true
+      })
+    }
+    if (
+      this.state.isFooterExpanded &&
+      prevState.commands.length !== 0 &&
+      this.state.commands.length === 0
+    ) {
+      this.setState({
+        isFooterExpanded: false
+      })
+    }
   }
 
   async fetchItems() {
@@ -166,12 +197,15 @@ export class Items extends React.Component {
 
   render() {
     const query = this.state.queries[this.state.activeQueryIndex]
-    console.log(query.columns)
 
     return (
       <>
         <div className="query-form">
-          <Radio.Group defaultValue="scan" className="scan-query-group" size="small">
+          <Radio.Group
+            defaultValue="scan"
+            className="scan-query-group"
+            size="small"
+          >
             <Radio.Button value="scan">Scan</Radio.Button>
             <Radio.Button value="query">Query</Radio.Button>
           </Radio.Group>
@@ -209,38 +243,80 @@ export class Items extends React.Component {
               </Menu>
             }
           >
-            <span style={{ marginRight: 10 }}>
+            <span className="index-dropdown">
               [Table] eventstore: streamId, version
               <Icon type="down" />
             </span>
           </Dropdown>
-          <Icon
-            type="plus-circle"
-            onClick={() => {
-              this.setState({
-                queryFormVisible: !this.state.queryFormVisible
-              })
-            }}
-          />
+
+          <div className="right">
+            <div
+              className={`iconwrapper ${
+                this.state.queryFilterVisible ? 'filter-opened' : ''
+              }`}
+              onClick={() => {
+                this.setState({
+                  queryFilterVisible: !this.state.queryFilterVisible
+                })
+              }}
+            >
+              <Icon type="filter" />
+              Filter
+            </div>
+            <Button type="primary" size="small">
+              Search
+            </Button>
+          </div>
         </div>
-        {this.state.queryFormVisible && (
-          <div className="query-form-options">
-            <AutoComplete
-              style={{ width: 100, marginRight: 5 }}
-              dataSource={query.columns.map(c => c.key)}
-              placeholder="Field name"
-            />
-            <AutoComplete
-              style={{ width: 100, marginRight: 5 }}
-              dataSource={['Begins with', '=', '>', '<']}
-              value="Begins with"
-            />
-            <Input
-              style={{ width: 100, marginRight: 5 }}
-              placeholder="Field value"
-            />
+        {this.state.queryFilterVisible && (
+          <div className="query-filter">
+            {this.state.queryFilters.map((filter, index) => (
+              <div className="query-filter-item" key={filter.id}>
+                <AutoComplete
+                  style={{ width: 150, marginRight: 5 }}
+                  dataSource={query.columns.map(c => c.key)}
+                  placeholder="Field name"
+                />
+                <AutoComplete
+                  style={{ width: 90, marginRight: 5 }}
+                  dataSource={['Begins with', '=', '>', '<']}
+                  value="Begins with"
+                />
+                <Input
+                  style={{ width: 150, marginRight: 5 }}
+                  placeholder="Field value"
+                />
+                <Icon
+                  type="minus-circle"
+                  className="item-remove item-add-remove"
+                  onClick={() => {
+                    this.setState({
+                      queryFilters: this.state.queryFilters.filter(
+                        f => f.id !== filter.id
+                      )
+                    })
+                  }}
+                />
+              </div>
+            ))}
+            <span
+              className="item-add-remove add-field-icon"
+              onClick={() => {
+                this.setState({
+                  queryFilters: [
+                    ...this.state.queryFilters,
+                    {
+                      id: Math.random()
+                    }
+                  ]
+                })
+              }}
+            >
+              <Icon type="plus-circle" /> Add field
+            </span>
           </div>
         )}
+
         <div className="table-wrapper">
           <AutoResizer>
             {({ width, height }) => (
@@ -305,49 +381,44 @@ export class Items extends React.Component {
                         <div className="table-wrapper">
                           <table className="log-table">
                             <tbody>
-                              <tr>
-                                <td className="operation">
-                                  <span className="add">
-                                    <Icon type="plus-circle" /> ADD
-                                  </span>
-                                </td>
-                                <td className="timestamp">1 minute ago</td>
-                                <td className="primary-key">primary key</td>
-                                <td className="icons">
-                                  <Icon type="info-circle" />
-                                  <Icon type="close" />
-                                </td>
-                              </tr>
+                              {this.state.commands.reverse().map(command => (
+                                <tr key={command.id}>
+                                  <td className="operation">
+                                    <span className={command.type}>
+                                      <Icon type="plus-circle" />
+                                      {command.type.toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td className="timestamp">
+                                    <RelativeTime time={command.timestamp} />
+                                  </td>
+                                  <td className="primary-key">{command.id}</td>
+                                  <td className="icons">
+                                    <Tooltip
+                                      title="Command details"
+                                      placement="left"
+                                    >
+                                      <Icon type="select" />
+                                    </Tooltip>
 
-                              <tr>
-                                <td className="operation">
-                                  <span className="edit">
-                                    <Icon type="edit" /> EDIT
-                                  </span>
-                                </td>
-                                <td className="timestamp">2 minutes ago</td>
-                                <td className="primary-key">primary key</td>
-
-                                <td className="icons">
-                                  <Icon type="info-circle" />
-                                  <Icon type="close" />
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td className="operation">
-                                  <span className="delete">
-                                    <Icon type="close-circle" /> DELETE
-                                  </span>
-                                </td>
-                                <td className="timestamp">3 minutes ago</td>
-                                <td className="primary-key">primary key</td>
-
-                                <td className="icons">
-                                  <Icon type="info-circle" />
-                                  <Icon type="close" />
-                                </td>
-                              </tr>
+                                    <Tooltip
+                                      title="Discard command"
+                                      placement="left"
+                                    >
+                                      <Icon
+                                        type="delete"
+                                        onClick={() => {
+                                          this.setState({
+                                            commands: this.state.commands.filter(
+                                              c => c.id !== command.id
+                                            )
+                                          })
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  </td>
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                         </div>
@@ -355,15 +426,35 @@ export class Items extends React.Component {
                     )}
                     <div className="footer-wrapper">
                       <div className="footer-left">
-                        <Icon type="plus-circle" />
+                        <Icon
+                          type="plus-circle"
+                          onClick={() => {
+                            this.setState({
+                              commands: [
+                                ...this.state.commands,
+                                {
+                                  id: Math.random(),
+                                  type: 'add',
+                                  timestamp: Date.now()
+                                }
+                              ]
+                            })
+                          }}
+                        />
                         <Icon type="reload" />
                         <Icon type="setting" />
                       </div>
                       <div className="footer-center">
-                        <span>
-                          Fetched {query.count} items ({query.scannedCount}{' '}
-                          scanned)
-                        </span>
+                        <Tooltip
+                          mouseEnterDelay={0.5}
+                          title={`${query.scannedCount} items
+                          scanned`}
+                        >
+                          <span className="fetched-message">
+                            Fetched {query.count} items
+                          </span>
+                        </Tooltip>
+
                         {query.isLoading ? (
                           <span className="loadmore">loading...</span>
                         ) : (
@@ -380,21 +471,48 @@ export class Items extends React.Component {
                         )}
                       </div>
                       <div className="footer-right">
-                        <span
-                          className="queue-message"
-                          onClick={() => {
-                            this.setState({
-                              isFooterExpanded: !this.state.isFooterExpanded
-                            })
-                          }}
-                        >
-                          <span className="commands-num">4</span> commands in
-                          queue
-                        </span>
+                        {this.state.commands.length ? (
+                          <span
+                            className="queue-message"
+                            onClick={() => {
+                              this.setState({
+                                isFooterExpanded: !this.state.isFooterExpanded
+                              })
+                            }}
+                          >
+                            <span className="commands-num">
+                              {this.state.commands.length}
+                            </span>
+                            commands in queue
+                            <Icon
+                              type={this.state.isFooterExpanded ? 'down' : 'up'}
+                            />
+                          </span>
+                        ) : null}
 
-                        <Button type="primary" size="small">
-                          Run
-                        </Button>
+                        {this.state.isFooterExpanded ? (
+                          <Button
+                            type="primary"
+                            size="small"
+                            onClick={e => {
+                              e.currentTarget.blur()
+                            }}
+                          >
+                            Execute
+                          </Button>
+                        ) : (
+                          <Button
+                            type="primary"
+                            size="small"
+                            style={{
+                              opacity: 0.2,
+                              cursor: 'default',
+                              pointerEvents: 'none'
+                            }}
+                          >
+                            Execute
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

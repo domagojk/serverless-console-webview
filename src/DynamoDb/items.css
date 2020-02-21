@@ -6,9 +6,13 @@
   background: var(--vscode-editor-background);
   border-bottom: 1px solid var(--vscode-breadcrumbPicker-background);
 }
-.dynamodb-page .BaseTable__table-main {
-  outline: 1px solid var(--vscode-breadcrumbPicker-background);
+.dynamodb-page .BaseTable--empty .BaseTable__header-row {
+  border: 0;
 }
+.dynamodb-page .BaseTable__table-main {
+  outline: none;
+}
+.dynamodb-page .BaseTable__table-main,
 .dynamodb-page .BaseTable__table,
 .dynamodb-page .BaseTable__empty-layer,
 .dynamodb-page .BaseTable {

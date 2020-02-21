@@ -1,3 +1,6 @@
+.dynamodb-page .ant-tooltip {
+  font-size: 12px;
+}
 .dynamodb-page .ant-tabs {
   margin: 0px;
 }
@@ -11,12 +14,19 @@
   display: flex;
   flex-direction: column;
 }
-.dynamodb-page .query-form {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  padding: 15px 10px;
-  cursor: pointer;
+.dynamodb-page button {
+  background: var(--vscode-button-background);
+  border-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  font-size: 12px;
+}
+.dynamodb-page button:hover {
+  background: var(--vscode-button-hoverBackground);
+  border-color: var(--vscode-button-hoverBackground);
+}
+
+.dynamodb-page .table-wrapper {
+  margin-top: 5px;
 }
 .dynamodb-page .log-table-wrapper {
   height: 200px;
@@ -31,31 +41,35 @@
 .dynamodb-page .log-table {
   width: 100%;
 }
-
+.dynamodb-page .footer-right {
+  justify-content: flex-end;
+  min-width: 230px;
+}
 .dynamodb-page .footer-right .queue-message {
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 .dynamodb-page .footer-right .queue-message:hover {
   color: #1890ff;
 }
+.dynamodb-page .footer-right .queue-message i {
+  margin-left: 4px;
+}
+.dynamodb-page .footer-center .fetched-message {
+  cursor: default;
+}
 .dynamodb-page .footer-right button {
-  margin-left: 10px;
-  font-weight: 500;
-  padding: 0 15px;
-  background: var(--vscode-button-background);
-  border-color: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
+  margin-left: 5px;
 }
-.dynamodb-page .footer-right button:hover {
-  background: var(--vscode-button-hoverBackground);
-  border-color: var(--vscode-button-hoverBackground);
-}
+
 .dynamodb-page .footer-right .commands-num {
-  padding: 1px 5px;
+  padding: 0px 6px;
   color: var(--vscode-activityBarBadge-foreground);
   background: var(--vscode-activityBarBadge-background);
   border-radius: 12px;
-  margin-right: 2px;
+  margin-right: 5px;
+  font-size: 12px;
 }
 
 .dynamodb-page .log-table tr {
@@ -71,9 +85,16 @@
 .dynamodb-page .log-table .icons i {
   padding-right: 10px;
 }
+.dynamodb-page i:hover {
+  cursor: pointer;
+}
+.dynamodb-page i:hover {
+  color: var(--vscode-editorInfo-foreground);
+}
 .dynamodb-page .log-table .operation {
   width: 100px;
   font-weight: bold;
+  user-select: none;
 }
 .dynamodb-page .log-table .operation i {
   padding-right: 5px;
@@ -97,6 +118,7 @@
   height: 40px;
   align-items: flex-end;
   padding: 0 10px;
+  user-select: none;
 }
 .dynamodb-page .BaseTable__footer {
   background: var(--vscode-sideBar-background);
@@ -115,35 +137,27 @@
   align-items: center;
   display: flex;
 }
-.dynamodb-page .footer-right {
-  justify-content: flex-end;
-  min-width: 220px;
-}
+
 .dynamodb-page .footer-wrapper .loadmore {
   margin: 0 10px;
 }
 .dynamodb-page .BaseTable {
   font-size: 1em;
 }
-.dynamodb-page .BaseTable__row-cell:hover .BaseTable__row-cell-text {
-  background: var(--vscode-editor-selectionBackground);
+.dynamodb-page .BaseTable__row-cell-text {
+  border-bottom: 1px solid transparent;
   cursor: default;
 }
-
-.dynamodb-page .firstcell svg {
-  margin: 0 4px;
-  font-size: 13px;
+.dynamodb-page .BaseTable__row-cell:hover .BaseTable__row-cell-text {
+  border-bottom: 1px dotted var(--vscode-editor-selectionBackground);
 }
+
 .dynamodb-page .BaseTable__row {
   user-select: none;
+  cursor: default;
 }
-.dynamodb-page .BaseTable__row--hovered .firstcell {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-.dynamodb-page .firstcell {
-  display: none;
+.dynamodb-page .BaseTable__row:hover {
+  background: var(--vscode-breadcrumbPicker-background);
 }
 .dynamodb-page .ant-checkbox-inner,
 .dynamodb-page .ant-checkbox-input:focus + .ant-checkbox-inner {
@@ -152,7 +166,7 @@
 }
 
 .dynamodb-page .footer-left i {
-  font-size: 16px;
+  font-size: 14px;
   margin: 0 5px;
 }
 .dynamodb-page .table-wrapper {
@@ -167,12 +181,13 @@
   border: 0;
 }
 .dynamodb-page .ant-radio-button-wrapper {
-  font-size: 0.85em;
+  font-size: 12px;
   background-color: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
   border-color: var(--vscode-checkbox-border);
   opacity: 0.7;
   box-shadow: none;
+  padding: 0px 10px;
 }
 .dynamodb-page .ant-radio-button-wrapper:hover {
   box-shadow: none;
@@ -185,4 +200,95 @@
 }
 .dynamodb-page .scan-query-group {
   margin-right: 20px;
+  flex-shrink: 0;
+}
+.dynamodb-page .query-form {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  margin-left: 10px;
+  margin-top: 10px;
+}
+.dynamodb-page .query-form .index-dropdown {
+  margin-right: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dynamodb-page .query-form .index-dropdown i {
+  margin-left: 5px;
+}
+
+.dynamodb-page .query-form .right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  margin-right: 10px;
+}
+.dynamodb-page .query-form .right button {
+  height: 26px;
+  margin-left: 4px;
+  padding: 0 10px;
+  margin-bottom: 3px;
+  font-size: 12px;
+}
+.dynamodb-page .query-form .right .iconwrapper {
+  padding: 0px 10px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  flex-shrink: 0;
+  height: 31px;
+  display: block;
+  margin-top: 0px;
+  cursor: pointer;
+}
+
+.dynamodb-page .query-form .right .iconwrapper.filter-opened {
+  background: var(--vscode-sideBar-background);
+}
+.dynamodb-page .query-form .right .iconwrapper i {
+  padding-top: 9px;
+  padding-right: 3px;
+}
+.dynamodb-page .query-filter {
+  background: var(--vscode-sideBar-background);
+  margin: 0 10px;
+  border-radius: 5px;
+  padding: 10px;
+  min-width: 440px;
+  position: relative;
+  min-height: 53px;
+}
+.dynamodb-page .query-filter .query-filter-item {
+  display: flex;
+  align-items: center;
+}
+.dynamodb-page .query-filter .item-add-remove {
+  opacity: 0.2;
+  cursor: pointer;
+}
+.dynamodb-page .query-filter .item-add-remove:hover {
+  opacity: 1;
+}
+.dynamodb-page .query-filter .add-field-icon {
+  position: absolute;
+  top: 17px;
+  right: 10px;
+  opacity: 0.2;
+}
+.dynamodb-page .query-filter .ant-select-selection {
+  background: var(--vscode-sideBar-background);
+  color: var(--vscode-editor-foreground);
+}
+.dynamodb-page .query-filter input.ant-input {
+  border: 0;
+  border-bottom: 1px solid var(--vscode-editor-findRangeHighlightBackground);
+}
+.dynamodb-page .query-filter input.ant-input:hover {
+  border-color: #40a9ff;
+  border-right-width: 1px !important;
+}
+.dynamodb-page .query-filter input.ant-input:not(.ant-select-search__field) {
+  background: var(--vscode-sideBar-background);
+  color: var(--vscode-editor-foreground);
 }
