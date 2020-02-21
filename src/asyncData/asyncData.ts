@@ -28,6 +28,7 @@ window.addEventListener('message', event => {
 
   if (subscriptions[message.messageId]) {
     subscriptions[message.messageId](message.payload)
+    delete subscriptions[message.messageId]
   }
 })
 
@@ -130,6 +131,7 @@ export function getLogEvents(params: {
   }[]
   nextForwardToken: string
   nextBackwardToken: string
+  ignore?: boolean
 }> {
   return new Promise((resolve, reject) => {
     const messageId = Math.random()

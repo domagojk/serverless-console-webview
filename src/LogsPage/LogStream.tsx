@@ -90,13 +90,16 @@ export class LogStream extends React.Component<{
         )
       })
     } catch (error) {
+      if (error.ignore) {
+        return this.setState({
+          loaded: true
+        })
+      }
       this.setState({
         loaded: true,
         error
       })
-      if (!error.ignore) {
-        console.error(error)
-      }
+      console.error(error)
     }
 
     this.initInterval()
@@ -163,13 +166,16 @@ export class LogStream extends React.Component<{
         nextForwardToken
       })
     } catch (error) {
+      if (error.ignore) {
+        return this.setState({
+          loadingNew: false
+        })
+      }
       this.setState({
         loadingNew: false,
         error
       })
-      if (!error.ignore) {
-        console.error(error)
-      }
+      console.error(error)
     }
   }
 
@@ -211,13 +217,16 @@ export class LogStream extends React.Component<{
         nextBackwardToken
       })
     } catch (error) {
+      if (error.ignore) {
+        return this.setState({
+          loadingOld: false
+        })
+      }
       this.setState({
         loadingOld: false,
         error
       })
-      if (!error.ignore) {
-        console.error(error)
-      }
+      console.error(error)
     }
   }
 
@@ -310,7 +319,9 @@ export class LogStream extends React.Component<{
             )
           })}
         </Collapse>,
-        this.state.error ? <div className="error">{this.state.error}</div> : null,
+        this.state.error ? (
+          <div className="error">{this.state.error}</div>
+        ) : null,
         <div className="retry-message retry-message-new" key="retrynew">
           {this.state.loadingNew ? (
             'loading new events...'

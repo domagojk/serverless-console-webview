@@ -45,7 +45,7 @@ export function Logs(props: Props) {
   const [customLogItems, setCustomLogItems] = useState(props.customLogs)
   const [successMessage, setSuccessMessage] = useState('')
   const [loading, setLoading] = useState(false)
-
+  const [envVars, setEnvVars] = useState([{ key: '', value: '' }])
   let textInput: any = React.createRef()
 
   const onSubmit = async e => {
@@ -87,7 +87,8 @@ export function Logs(props: Props) {
             offset,
             stages,
             stacks,
-            title: useSlsTitle ? null : title
+            title: useSlsTitle ? null : title,
+            envVars: envVars.filter(env => env.key && env.value)
           })
         } catch (err) {
           errorsDescTemp.push(err.message)
@@ -297,11 +298,49 @@ export function Logs(props: Props) {
               />
             </td>
           </tr>,
-
           <tr>
             <td className="td-left">Stages</td>
             <td className={errors.includes('stages') && 'error'}>
               <Stages stages={stages} onStagesChange={setStages} />
+            </td>
+          </tr>,
+          <tr>
+            <td valign="top" style={{ paddingTop: 7 }}>
+              Enviroment variables
+            </td>
+            <td>
+              {envVars.map((vars, i) => (
+                <div key={i}>
+                  <Input
+                    style={{ width: '40%', marginRight: '5%', marginBottom: 5 }}
+                    placeholder="Key"
+                    value={vars.key}
+                    onChange={e => {
+                      let newVars = [...envVars]
+                      newVars[i].key = e.target.value
+                      setEnvVars(newVars)
+                    }}
+                  />
+                  <Input
+                    style={{ width: '40%', marginRight: '5%', marginBottom: 5 }}
+                    placeholder="Value"
+                    value={vars.value}
+                    onChange={e => {
+                      let newVars = [...envVars]
+                      newVars[i].value = e.target.value
+                      setEnvVars(newVars)
+                    }}
+                  />
+                  {envVars.length === i + 1 && (
+                    <Icon
+                      type="plus-circle"
+                      onClick={() =>
+                        setEnvVars([...envVars, { key: '', value: '' }])
+                      }
+                    />
+                  )}
+                </div>
+              ))}
             </td>
           </tr>
         ]}
