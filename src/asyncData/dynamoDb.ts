@@ -1,8 +1,8 @@
-// todo: remove for production
-import { DynamoDB } from 'aws-sdk'
-import { vscode } from './asyncData'
+// import { DynamoDB } from 'aws-sdk'
+import { vscode, subscriptions } from './asyncData'
 
-export async function dynamoDbTableDesc() {
+export function dynamoDbTableDesc(): any {
+  /*
   const dynamo = new DynamoDB({
     credentials: {
       accessKeyId: '',
@@ -18,6 +18,24 @@ export async function dynamoDbTableDesc() {
     .promise()
 
   return res.Table
+  */
+
+  return new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'describeTable',
+      messageId,
+      payload: {}
+    })
+
+    subscriptions[messageId] = (res: any) => {
+      if (res.error) {
+        reject(res.error)
+      } else {
+        resolve(res)
+      }
+    }
+  })
 }
 
 export async function dynamoDbScan({
@@ -34,21 +52,43 @@ export async function dynamoDbScan({
   scannedCount: number
   lastEvaluatedKey?: any
 }> {
+  /*
   const dynamo = new DynamoDB.DocumentClient({
     credentials: {
       accessKeyId: '',
       secretAccessKey: ''
     },
-    region: 'us-east-1'
+    region: ''
   })
 
   const res = await dynamo
     .scan({
-      TableName: 'eventstore',
+      TableName: '',
       Limit: limit,
       ExclusiveStartKey: lastEvaluatedKey
     })
     .promise()
+  */
+
+  const res: any = await new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'scan',
+      messageId,
+      payload: {
+        lastEvaluatedKey,
+        limit
+      }
+    })
+
+    subscriptions[messageId] = (res: any) => {
+      if (res.error) {
+        reject(res.error)
+      } else {
+        resolve(res)
+      }
+    }
+  })
 
   let countPerColumn = {}
   let columns = {}
@@ -81,16 +121,34 @@ export async function dynamoDbScan({
   }
 }
 
-export function openJSON(payload: {
+export function editItem(payload: {
   content: any
-  tableName?: string,
-  hashKey?: string,
+  tableName?: string
+  hashKey?: string
   sortKey?: string
   selectColumn?: string
   columns?: string[]
+  newData?: any
 }) {
   vscode.postMessage({
-    command: 'openJSON',
+    command: 'editItem',
     payload
+  })
+}
+
+export function deleteItem(payload: {
+  tableName: string
+  hashKey: string
+  sortKey: string
+}) {
+  vscode.postMessage({
+    command: 'deleteItem',
+    payload
+  })
+}
+
+export function createItem() {
+  vscode.postMessage({
+    command: 'createItem'
   })
 }

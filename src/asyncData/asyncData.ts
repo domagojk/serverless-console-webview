@@ -32,6 +32,15 @@ window.addEventListener('message', event => {
   }
 })
 
+export function postComponentMounted() {
+  const messageId = Math.random()
+  vscode.postMessage({
+    command: 'componentMounted',
+    messageId,
+    payload: {}
+  })
+}
+
 export function getLambdaOverview({
   fnName,
   region
@@ -131,7 +140,6 @@ export function getLogEvents(params: {
   }[]
   nextForwardToken: string
   nextBackwardToken: string
-  ignore?: boolean
 }> {
   return new Promise((resolve, reject) => {
     const messageId = Math.random()

@@ -41,6 +41,12 @@
 .dynamodb-page .log-table {
   width: 100%;
 }
+.dynamodb-page .log-table .command-row {
+  cursor: pointer;
+}
+.dynamodb-page .log-table .command-row:hover {
+  background: var(--vscode-editor-findRangeHighlightBackground);
+}
 .dynamodb-page .footer-right {
   justify-content: flex-end;
   min-width: 230px;
@@ -55,9 +61,6 @@
 }
 .dynamodb-page .footer-right .queue-message i {
   margin-left: 4px;
-}
-.dynamodb-page .footer-center .fetched-message {
-  cursor: default;
 }
 .dynamodb-page .footer-right button {
   margin-left: 5px;
@@ -95,23 +98,37 @@
   width: 100px;
   font-weight: bold;
   user-select: none;
+  min-width: 90px;
 }
 .dynamodb-page .log-table .operation i {
   padding-right: 5px;
 }
 .dynamodb-page .log-table .timestamp {
-  width: 150px;
+  min-width: 115px;
 }
-.dynamodb-page .log-table .operation .add i {
-  color: rgb(115, 201, 145);
+.dynamodb-page .log-table .primary-key {
+  min-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.dynamodb-page .log-table .operation .edit i {
-  color: rgb(226, 192, 141);
+.dynamodb-page .log-table .operation .create i {
+  color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+.dynamodb-page .log-table .operation .update i {
+  color: var(--vscode-gitDecoration-modifiedResourceForeground);
 }
 .dynamodb-page .log-table .operation .delete i {
-  color: rgb(199, 78, 57);
+  color: var(--vscode-gitDecoration-deletedResourceForeground);
 }
 
+.dynamodb-page .load-more {
+  text-align: center;
+  background: var(--vscode-editor-background);
+  position: sticky;
+  left: calc(50% - 200px);
+  width: 400px;
+}
 .dynamodb-page .footer-wrapper {
   display: flex;
   justify-content: space-between;
@@ -156,9 +173,22 @@
   user-select: none;
   cursor: default;
 }
-.dynamodb-page .BaseTable__row:hover {
+.dynamodb-page .BaseTable__row.updated-item {
+  color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+.dynamodb-page .BaseTable__row.deleted-item {
+  color: var(--vscode-gitDecoration-deletedResourceForeground);
+}
+.dynamodb-page .BaseTable__row.command-hover {
+  background: var(--vscode-editor-findRangeHighlightBackground);
+}
+.dynamodb-page .BaseTable__row:not(:last-child):hover {
   background: var(--vscode-breadcrumbPicker-background);
 }
+.dynamodb-page .BaseTable__row.context-menu-hover {
+  background: var(--vscode-editor-selectionBackground) !important;
+}
+
 .dynamodb-page .ant-checkbox-inner,
 .dynamodb-page .ant-checkbox-input:focus + .ant-checkbox-inner {
   background-color: transparent;
@@ -291,4 +321,17 @@
 .dynamodb-page .query-filter input.ant-input:not(.ant-select-search__field) {
   background: var(--vscode-sideBar-background);
   color: var(--vscode-editor-foreground);
+}
+
+.dynamodb-page .context-menu {
+  position: fixed;
+  z-index: 10;
+  outline: none;
+  border: 1px solid var(--vscode-dropdown-border);
+  background: #fff;
+}
+.dynamodb-page .context-menu .ant-menu-inline .ant-menu-item {
+  height: 30px;
+  line-height: 30px;
+  font-size: 12px;
 }

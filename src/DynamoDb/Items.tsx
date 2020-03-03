@@ -5,8 +5,11 @@ import './items.css'
 import {
   dynamoDbScan,
   dynamoDbTableDesc,
-  openJSON
+  editItem,
+  deleteItem,
+  createItem
 } from '../asyncData/dynamoDb'
+import { postComponentMounted } from '../asyncData/asyncData'
 import {
   Icon,
   Button,
@@ -17,11 +20,7 @@ import {
   Radio,
   Tooltip
 } from 'antd'
-import { faExternalLinkAlt, faKey } from '@fortawesome/free-solid-svg-icons'
-import { library } from '@fortawesome/fontawesome-svg-core'
 import { RelativeTime } from '../LogsPage/RelativeTime'
-
-library.add(faExternalLinkAlt, faKey)
 
 export class Items extends React.Component {
   state = {
@@ -32,9 +31,12 @@ export class Items extends React.Component {
       }
     ],
     commands: [] as {
-      type: 'add' | 'edit' | 'delete'
+      action: 'create' | 'update' | 'delete'
       id: string
+      compositKey: string
       timestamp: number
+      newData?: any
+      icon?: string
     }[],
     queries: [
       {
@@ -48,15 +50,64 @@ export class Items extends React.Component {
         items: []
       }
     ],
+    contextMenu: {
+      top: 0,
+      left: 0,
+      slcConsoleKey: null
+    },
     tableName: '',
     hashKey: '',
     sortKey: '',
     isFooterExpanded: false,
     defaultColumns: [],
-    selectedRows: [],
+    commandHoverRows: [],
     lastSelected: null,
     activeQueryIndex: 0,
     sortBy: {}
+  }
+  contextMenuRef: React.RefObject<any>
+
+  constructor(props) {
+    super(props)
+    this.contextMenuRef = React.createRef()
+  }
+
+  async componentDidMount() {
+    const tableDesc = await dynamoDbTableDesc()
+    const hashKey = tableDesc.KeySchema.find(key => key.KeyType === 'HASH')
+    const range = tableDesc.KeySchema.find(key => key.KeyType === 'RANGE')
+
+    this.setState({
+      tableName: tableDesc.TableName,
+      hashKey: hashKey && hashKey.AttributeName ? hashKey.AttributeName : null,
+      sortKey: range ? range.AttributeName && range.AttributeName : null,
+      defaultColumns: [hashKey.AttributeName, range?.AttributeName].filter(
+        val => !!val
+      )
+    })
+    await this.fetchItems()
+
+    window.addEventListener('message', event => {
+      if (event?.data?.type === 'defineDynamoDbCommands') {
+        this.setState({
+          commands: event.data.payload.map(command => {
+            return {
+              ...command,
+              icon:
+                command.action === 'create'
+                  ? 'plus-circle'
+                  : command.action === 'update'
+                  ? 'edit'
+                  : command.action === 'delete'
+                  ? 'close-circle'
+                  : ''
+            }
+          })
+        })
+      }
+    })
+
+    postComponentMounted()
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -75,7 +126,8 @@ export class Items extends React.Component {
       this.state.commands.length === 0
     ) {
       this.setState({
-        isFooterExpanded: false
+        isFooterExpanded: false,
+        commandHoverRows: []
       })
     }
   }
@@ -121,13 +173,12 @@ export class Items extends React.Component {
               }
             })
 
-          return {
-            ...query,
-            isLoading: false,
-            count: query.count + res.count,
-            scannedCount: query.scannedCount + res.scannedCount,
-            originalItems: [...query.originalItems, ...res.items],
-            items: [...query.items, ...res.items].map((item, index) => {
+          const currentItems = query.items.filter(
+            item => item._slsConsoleKey !== 'loadMore'
+          )
+
+          const newItems = [...currentItems, ...res.items].map(
+            (item, index) => {
               const stringified = Object.keys(item).reduce((acc, curr) => {
                 return {
                   ...acc,
@@ -142,7 +193,21 @@ export class Items extends React.Component {
                 ...stringified,
                 _slsConsoleKey: index
               }
-            }),
+            }
+          )
+
+          return {
+            ...query,
+            isLoading: false,
+            count: query.count + res.count,
+            scannedCount: query.scannedCount + res.scannedCount,
+            originalItems: [...query.originalItems, ...res.items],
+            items: [
+              ...newItems,
+              {
+                _slsConsoleKey: 'loadMore'
+              }
+            ],
             columns: [
               ...columnNames.map(column => {
                 const prevColumn = query.columns.find(c => c.key === column)
@@ -170,22 +235,6 @@ export class Items extends React.Component {
     })
   }
 
-  async componentDidMount() {
-    const tableDesc = await dynamoDbTableDesc()
-    const hashKey = tableDesc.KeySchema.find(key => key.KeyType === 'HASH')
-    const range = tableDesc.KeySchema.find(key => key.KeyType === 'RANGE')
-
-    this.setState({
-      tableName: tableDesc.TableName,
-      hashKey: hashKey && hashKey.AttributeName ? hashKey.AttributeName : null,
-      sortKey: range ? range.AttributeName && range.AttributeName : null,
-      defaultColumns: [hashKey.AttributeName, range?.AttributeName].filter(
-        val => !!val
-      )
-    })
-    await this.fetchItems()
-  }
-
   onColumnSort = sortBy => {
     console.log(sortBy)
 
@@ -195,11 +244,82 @@ export class Items extends React.Component {
     })*/
   }
 
+  getCompositKey = rowData => {
+    return !this.state.sortKey
+      ? rowData[this.state.hashKey]
+      : `${rowData[this.state.hashKey]}-${rowData[this.state.sortKey]}`
+  }
+
   render() {
     const query = this.state.queries[this.state.activeQueryIndex]
 
     return (
       <>
+        {this.state.contextMenu?.slcConsoleKey !== null && (
+          <div
+            ref={this.contextMenuRef}
+            className="context-menu"
+            tabIndex={1}
+            onBlur={() => {
+              this.setState({
+                contextMenu: {
+                  slcConsoleKey: null
+                }
+              })
+            }}
+            style={{
+              top: this.state.contextMenu.top,
+              left: this.state.contextMenu.left
+            }}
+          >
+            <Menu
+              style={{
+                width: 135
+              }}
+              mode="inline"
+            >
+              <Menu.Item key="duplicate">
+                <Icon type="copy" /> Duplicate
+              </Menu.Item>
+              <Menu.Item
+                key="edit"
+                onClick={() => {
+                  const slcConsoleKey = this.state.contextMenu.slcConsoleKey
+
+                  editItem({
+                    content: query.originalItems[slcConsoleKey],
+                    columns: query.columns.map(c => c.key),
+                    hashKey: this.state.hashKey,
+                    sortKey: this.state.sortKey,
+                    tableName: this.state.tableName
+                  })
+                  this.contextMenuRef.current?.blur()
+                }}
+              >
+                <Icon type="edit" /> Edit
+              </Menu.Item>
+              <Menu.Item
+                key="delete"
+                onClick={() => {
+                  const slcConsoleKey = this.state.contextMenu.slcConsoleKey
+
+                  deleteItem({
+                    hashKey:
+                      query.originalItems[slcConsoleKey][this.state.hashKey],
+                    sortKey:
+                      this.state.sortKey !== undefined
+                        ? query.originalItems[slcConsoleKey][this.state.sortKey]
+                        : null,
+                    tableName: this.state.tableName
+                  })
+                  this.contextMenuRef.current?.blur()
+                }}
+              >
+                <Icon type="delete" /> Delete
+              </Menu.Item>
+            </Menu>
+          </div>
+        )}
         <div className="query-form">
           <Radio.Group
             defaultValue="scan"
@@ -332,26 +452,70 @@ export class Items extends React.Component {
                 footerHeight={this.state.isFooterExpanded ? 240 : 40}
                 sortBy={this.state.sortBy}
                 onColumnSort={this.onColumnSort}
-                rowClassName={({ rowIndex }) => {
-                  return this.state.selectedRows.includes(rowIndex)
-                    ? 'selected'
-                    : ''
+                rowClassName={({ rowIndex, rowData }) => {
+                  let classes = ''
+                  const compositKey = this.getCompositKey(rowData)
+                  const command = this.state.commands.find(
+                    c => c.compositKey === compositKey
+                  )
+
+                  if (this.state.commandHoverRows.includes(compositKey)) {
+                    classes += ' command-hover'
+                  }
+                  if (command && command.action === 'update') {
+                    classes += ' updated-item'
+                  }
+                  if (command && command.action === 'delete') {
+                    classes += ' deleted-item'
+                  }
+                  if (
+                    this.state.contextMenu?.slcConsoleKey ===
+                    rowData._slsConsoleKey
+                  ) {
+                    classes += ' context-menu-hover'
+                  }
+                  return classes
                 }}
                 cellProps={({ column, rowData }) => ({
                   onDoubleClick: e => {
-                    openJSON({
+                    const compositKey = this.getCompositKey(rowData)
+                    const command = this.state.commands.find(
+                      c => c.compositKey === compositKey
+                    )
+
+                    editItem({
                       content: query.originalItems[rowData._slsConsoleKey],
                       selectColumn: column.dataKey,
                       columns: query.columns.map(c => c.key),
                       hashKey: this.state.hashKey,
                       sortKey: this.state.sortKey,
-                      tableName: this.state.tableName
+                      tableName: this.state.tableName,
+                      newData: command?.newData
                     })
                   }
                 })}
                 rowEventHandlers={{
-                  onContextMenu: () => {
-                    console.log('right click')
+                  onContextMenu: ({ event, rowData }) => {
+                    event.preventDefault()
+                    if (rowData._slsConsoleKey === 'loadMore') {
+                      return
+                    }
+                    const maxWidth = window.innerWidth - 140
+                    const maxHeight = window.innerHeight - 180
+
+                    this.setState(
+                      {
+                        contextMenu: {
+                          slcConsoleKey: rowData._slsConsoleKey,
+                          top:
+                            event.pageY > maxHeight ? maxHeight : event.pageY,
+                          left: event.pageX > maxWidth ? maxWidth : event.pageX
+                        }
+                      },
+                      () => {
+                        this.contextMenuRef.current?.focus()
+                      }
+                    )
                   },
                   onClick: ({ rowIndex, rowKey, rowData, event }) => {
                     console.log(
@@ -374,33 +538,74 @@ export class Items extends React.Component {
                   })*/
                   }
                 }}
+                rowRenderer={({ rowData, cells }) => {
+                  if (rowData._slsConsoleKey === 'loadMore') {
+                    return (
+                      <div className="load-more">
+                        <Tooltip
+                          mouseEnterDelay={0.5}
+                          title={`${query.scannedCount} items
+                        scanned`}
+                        >
+                          <span className="fetched-message">
+                            Fetched {query.count} items
+                          </span>
+                        </Tooltip>
+
+                        {query.isLoading ? (
+                          <span className="loadmore">loading...</span>
+                        ) : (
+                          query.lastEvaluatedKey && (
+                            <span
+                              className="spanlink loadmore"
+                              onClick={() => {
+                                this.fetchItems()
+                              }}
+                            >
+                              Load more
+                            </span>
+                          )
+                        )}
+                      </div>
+                    )
+                  }
+                  return cells
+                }}
                 footerRenderer={
-                  <div>
+                  <div className="footer">
                     {this.state.isFooterExpanded && (
                       <div className="log-table-wrapper">
                         <div className="table-wrapper">
                           <table className="log-table">
                             <tbody>
-                              {this.state.commands.reverse().map(command => (
-                                <tr key={command.id}>
+                              {this.state.commands.map(command => (
+                                <tr
+                                  key={command.id}
+                                  className="command-row"
+                                  onMouseEnter={() => {
+                                    this.setState({
+                                      commandHoverRows: command.compositKey
+                                    })
+                                  }}
+                                  onMouseLeave={() => {
+                                    this.setState({
+                                      commandHoverRows: []
+                                    })
+                                  }}
+                                >
                                   <td className="operation">
-                                    <span className={command.type}>
-                                      <Icon type="plus-circle" />
-                                      {command.type.toUpperCase()}
+                                    <span className={command.action}>
+                                      <Icon type={command.icon} />
+                                      {command.action?.toUpperCase()}
                                     </span>
                                   </td>
                                   <td className="timestamp">
                                     <RelativeTime time={command.timestamp} />
                                   </td>
-                                  <td className="primary-key">{command.id}</td>
+                                  <td className="primary-key">
+                                    {command.compositKey}
+                                  </td>
                                   <td className="icons">
-                                    <Tooltip
-                                      title="Command details"
-                                      placement="left"
-                                    >
-                                      <Icon type="select" />
-                                    </Tooltip>
-
                                     <Tooltip
                                       title="Discard command"
                                       placement="left"
@@ -429,47 +634,13 @@ export class Items extends React.Component {
                         <Icon
                           type="plus-circle"
                           onClick={() => {
-                            this.setState({
-                              commands: [
-                                ...this.state.commands,
-                                {
-                                  id: Math.random(),
-                                  type: 'add',
-                                  timestamp: Date.now()
-                                }
-                              ]
-                            })
+                            createItem()
                           }}
                         />
                         <Icon type="reload" />
                         <Icon type="setting" />
                       </div>
-                      <div className="footer-center">
-                        <Tooltip
-                          mouseEnterDelay={0.5}
-                          title={`${query.scannedCount} items
-                          scanned`}
-                        >
-                          <span className="fetched-message">
-                            Fetched {query.count} items
-                          </span>
-                        </Tooltip>
 
-                        {query.isLoading ? (
-                          <span className="loadmore">loading...</span>
-                        ) : (
-                          query.lastEvaluatedKey && (
-                            <span
-                              className="spanlink loadmore"
-                              onClick={() => {
-                                this.fetchItems()
-                              }}
-                            >
-                              Load more
-                            </span>
-                          )
-                        )}
-                      </div>
                       <div className="footer-right">
                         {this.state.commands.length ? (
                           <span
@@ -483,7 +654,7 @@ export class Items extends React.Component {
                             <span className="commands-num">
                               {this.state.commands.length}
                             </span>
-                            commands in queue
+                            staged commands
                             <Icon
                               type={this.state.isFooterExpanded ? 'down' : 'up'}
                             />
