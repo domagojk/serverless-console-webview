@@ -1,0 +1,42 @@
+.dynamodb-page .query-filter {
+  background: var(--vscode-sideBar-background);
+  margin: 0 10px;
+  border-radius: 5px;
+  padding: 10px;
+  min-width: 440px;
+  position: relative;
+  min-height: 53px;
+}
+.dynamodb-page .query-filter .query-filter-item {
+  display: flex;
+  align-items: center;
+}
+.dynamodb-page .query-filter .item-add-remove {
+  opacity: 0.2;
+  cursor: pointer;
+}
+.dynamodb-page .query-filter .item-add-remove:hover {
+  opacity: 1;
+}
+.dynamodb-page .query-filter .add-field-icon {
+  position: absolute;
+  top: 17px;
+  right: 10px;
+  opacity: 0.2;
+}
+.dynamodb-page .query-filter .ant-select-selection {
+  background: var(--vscode-sideBar-background);
+  color: var(--vscode-editor-foreground);
+}
+.dynamodb-page .query-filter input.ant-input {
+  border: 0;
+  border-bottom: 1px solid var(--vscode-editor-findRangeHighlightBackground);
+}
+.dynamodb-page .query-filter input.ant-input:hover {
+  border-color: #40a9ff;
+  border-right-width: 1px !important;
+}
+.dynamodb-page .query-filter input.ant-input:not(.ant-select-search__field) {
+  background: var(--vscode-sideBar-background);
+  color: var(--vscode-editor-foreground);
+}

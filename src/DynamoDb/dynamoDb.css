@@ -1,3 +1,29 @@
+.dynamodb-page .BaseTable__row {
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-breadcrumbPicker-background);
+}
+.dynamodb-page .BaseTable__header-row {
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-breadcrumbPicker-background);
+}
+.dynamodb-page .BaseTable--empty .BaseTable__header-row {
+  border: 0;
+}
+.dynamodb-page .BaseTable__table-main {
+  outline: none;
+}
+.dynamodb-page .BaseTable__table-main,
+.dynamodb-page .BaseTable__table,
+.dynamodb-page .BaseTable__empty-layer,
+.dynamodb-page .BaseTable {
+  background: none;
+  box-shadow: none;
+}
+
+.dynamodb-page .BaseTable__footer {
+  box-shadow: none;
+}
+
 .dynamodb-page .ant-tooltip {
   font-size: 12px;
 }
@@ -231,107 +257,4 @@
 .dynamodb-page .scan-query-group {
   margin-right: 20px;
   flex-shrink: 0;
-}
-.dynamodb-page .query-form {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  margin-left: 10px;
-  margin-top: 10px;
-}
-.dynamodb-page .query-form .index-dropdown {
-  margin-right: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dynamodb-page .query-form .index-dropdown i {
-  margin-left: 5px;
-}
-
-.dynamodb-page .query-form .right {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  margin-right: 10px;
-}
-.dynamodb-page .query-form .right button {
-  height: 26px;
-  margin-left: 4px;
-  padding: 0 10px;
-  margin-bottom: 3px;
-  font-size: 12px;
-}
-.dynamodb-page .query-form .right .iconwrapper {
-  padding: 0px 10px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  flex-shrink: 0;
-  height: 31px;
-  display: block;
-  margin-top: 0px;
-  cursor: pointer;
-}
-
-.dynamodb-page .query-form .right .iconwrapper.filter-opened {
-  background: var(--vscode-sideBar-background);
-}
-.dynamodb-page .query-form .right .iconwrapper i {
-  padding-top: 9px;
-  padding-right: 3px;
-}
-.dynamodb-page .query-filter {
-  background: var(--vscode-sideBar-background);
-  margin: 0 10px;
-  border-radius: 5px;
-  padding: 10px;
-  min-width: 440px;
-  position: relative;
-  min-height: 53px;
-}
-.dynamodb-page .query-filter .query-filter-item {
-  display: flex;
-  align-items: center;
-}
-.dynamodb-page .query-filter .item-add-remove {
-  opacity: 0.2;
-  cursor: pointer;
-}
-.dynamodb-page .query-filter .item-add-remove:hover {
-  opacity: 1;
-}
-.dynamodb-page .query-filter .add-field-icon {
-  position: absolute;
-  top: 17px;
-  right: 10px;
-  opacity: 0.2;
-}
-.dynamodb-page .query-filter .ant-select-selection {
-  background: var(--vscode-sideBar-background);
-  color: var(--vscode-editor-foreground);
-}
-.dynamodb-page .query-filter input.ant-input {
-  border: 0;
-  border-bottom: 1px solid var(--vscode-editor-findRangeHighlightBackground);
-}
-.dynamodb-page .query-filter input.ant-input:hover {
-  border-color: #40a9ff;
-  border-right-width: 1px !important;
-}
-.dynamodb-page .query-filter input.ant-input:not(.ant-select-search__field) {
-  background: var(--vscode-sideBar-background);
-  color: var(--vscode-editor-foreground);
-}
-
-.dynamodb-page .context-menu {
-  position: fixed;
-  z-index: 10;
-  outline: none;
-  border: 1px solid var(--vscode-dropdown-border);
-  background: #fff;
-}
-.dynamodb-page .context-menu .ant-menu-inline .ant-menu-item {
-  height: 30px;
-  line-height: 30px;
-  font-size: 12px;
 }

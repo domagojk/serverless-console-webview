@@ -1,7 +1,74 @@
 // import { DynamoDB } from 'aws-sdk'
 import { vscode, subscriptions } from './asyncData'
 
-export function dynamoDbTableDesc(): any {
+export function dynamoDbTableDesc(): Promise<{
+  tableName: string
+  hashKey: string
+  sortKey: string
+  indexes: {
+    id: string
+    name: string
+    hashRangeKeys: string[]
+  }[]
+}> {
+  return new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'describeTable',
+      messageId,
+      payload: {}
+    })
+
+    subscriptions[messageId] = (res: any) => {
+      if (res.error) {
+        reject(res.error)
+      } else {
+        const hashKey = res.KeySchema.find(key => key.KeyType === 'HASH')
+        const rangeKey = res.KeySchema.find(key => key.KeyType === 'RANGE')
+
+        resolve({
+          tableName: res.TableName,
+          hashKey: hashKey.AttributeName,
+          sortKey: rangeKey
+            ? rangeKey.AttributeName && rangeKey.AttributeName
+            : null,
+
+          indexes: [
+            {
+              id: 'default',
+              name: rangeKey
+                ? `[Table] ${res.TableName}: ${hashKey.AttributeName}, ${rangeKey.AttributeName}`
+                : `[Table] ${res.TableName}: ${hashKey.AttributeName}`,
+              hashRangeKeys: [
+                hashKey.AttributeName,
+                rangeKey?.AttributeName
+              ].filter(val => !!val)
+            },
+            ...res.GlobalSecondaryIndexes.map(index => {
+              const hashKey = index.KeySchema.find(
+                key => key.KeyType === 'HASH'
+              )
+              const rangeKey = index.KeySchema.find(
+                key => key.KeyType === 'RANGE'
+              )
+
+              return {
+                id: index.IndexName,
+                name: rangeKey
+                  ? `[Index] ${index.IndexName}: ${hashKey.AttributeName}, ${rangeKey.AttributeName}`
+                  : `[Index] ${index.IndexName}: ${hashKey.AttributeName}`,
+                hashRangeKeys: [
+                  hashKey.AttributeName,
+                  rangeKey?.AttributeName
+                ].filter(val => !!val)
+              }
+            })
+          ]
+        })
+      }
+    }
+  })
+
   /*
   const dynamo = new DynamoDB({
     credentials: {
@@ -19,31 +86,18 @@ export function dynamoDbTableDesc(): any {
 
   return res.Table
   */
-
-  return new Promise((resolve, reject) => {
-    const messageId = Math.random()
-    vscode.postMessage({
-      command: 'describeTable',
-      messageId,
-      payload: {}
-    })
-
-    subscriptions[messageId] = (res: any) => {
-      if (res.error) {
-        reject(res.error)
-      } else {
-        resolve(res)
-      }
-    }
-  })
 }
 
-export async function dynamoDbScan({
+export async function dynamoDbFetchItems({
   lastEvaluatedKey,
-  limit = 100
+  limit = 100,
+  queryType = 'scan',
+  index
 }: {
   lastEvaluatedKey?: any
   limit?: number
+  index?: string
+  queryType?: 'scan' | 'query'
 }): Promise<{
   items: any[]
   count: number
@@ -52,31 +106,15 @@ export async function dynamoDbScan({
   scannedCount: number
   lastEvaluatedKey?: any
 }> {
-  /*
-  const dynamo = new DynamoDB.DocumentClient({
-    credentials: {
-      accessKeyId: '',
-      secretAccessKey: ''
-    },
-    region: ''
-  })
-
-  const res = await dynamo
-    .scan({
-      TableName: '',
-      Limit: limit,
-      ExclusiveStartKey: lastEvaluatedKey
-    })
-    .promise()
-  */
-
   const res: any = await new Promise((resolve, reject) => {
     const messageId = Math.random()
     vscode.postMessage({
-      command: 'scan',
+      command: 'fetchItems',
       messageId,
       payload: {
         lastEvaluatedKey,
+        index,
+        queryType,
         limit
       }
     })
@@ -119,13 +157,29 @@ export async function dynamoDbScan({
     countPerColumn,
     lastEvaluatedKey: res.LastEvaluatedKey
   }
+  /*
+  const dynamo = new DynamoDB.DocumentClient({
+    credentials: {
+      accessKeyId: '',
+      secretAccessKey: ''
+    },
+    region: ''
+  })
+
+  const res = await dynamo
+    .scan({
+      TableName: '',
+      Limit: limit,
+      ExclusiveStartKey: lastEvaluatedKey
+    })
+    .promise()
+  */
 }
 
 export function editItem(payload: {
   content: any
-  tableName?: string
-  hashKey?: string
-  sortKey?: string
+  index: string
+  queryType: string
   selectColumn?: string
   columns?: string[]
   newData?: any

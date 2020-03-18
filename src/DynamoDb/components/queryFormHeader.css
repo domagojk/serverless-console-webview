@@ -1,0 +1,48 @@
+.dynamodb-page .query-form {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  margin-left: 10px;
+  margin-top: 10px;
+}
+.dynamodb-page .query-form .index-dropdown {
+  margin-right: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dynamodb-page .query-form .index-dropdown i {
+  margin-left: 5px;
+}
+
+.dynamodb-page .query-form .right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  margin-right: 10px;
+}
+.dynamodb-page .query-form .right button {
+  height: 26px;
+  margin-left: 4px;
+  padding: 0 10px;
+  margin-bottom: 3px;
+  font-size: 12px;
+}
+.dynamodb-page .query-form .right .iconwrapper {
+  padding: 0px 10px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  flex-shrink: 0;
+  height: 31px;
+  display: block;
+  margin-top: 0px;
+  cursor: pointer;
+}
+
+.dynamodb-page .query-form .right .iconwrapper.filter-opened {
+  background: var(--vscode-sideBar-background);
+}
+.dynamodb-page .query-form .right .iconwrapper i {
+  padding-top: 9px;
+  padding-right: 3px;
+}
