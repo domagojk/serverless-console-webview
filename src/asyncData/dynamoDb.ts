@@ -1,5 +1,6 @@
 // import { DynamoDB } from 'aws-sdk'
 import { vscode, subscriptions } from './asyncData'
+import { QueryFilter } from '../DynamoDb/DynamoDb'
 
 export function dynamoDbTableDesc(): Promise<{
   tableName: string
@@ -10,6 +11,7 @@ export function dynamoDbTableDesc(): Promise<{
     name: string
     hashRangeKeys: string[]
   }[]
+  attributesSchema: Record<string, string>
 }> {
   return new Promise((resolve, reject) => {
     const messageId = Math.random()
@@ -63,7 +65,13 @@ export function dynamoDbTableDesc(): Promise<{
                 ].filter(val => !!val)
               }
             })
-          ]
+          ],
+          attributesSchema: res.AttributeDefinitions.reduce((acc, curr) => {
+            return {
+              ...acc,
+              [curr.AttributeName]: curr.AttributeType
+            }
+          }, {})
         })
       }
     }
@@ -92,12 +100,14 @@ export async function dynamoDbFetchItems({
   lastEvaluatedKey,
   limit = 100,
   queryType = 'scan',
+  filters,
   index
 }: {
   lastEvaluatedKey?: any
   limit?: number
   index?: string
   queryType?: 'scan' | 'query'
+  filters?: QueryFilter[]
 }): Promise<{
   items: any[]
   count: number
@@ -115,6 +125,16 @@ export async function dynamoDbFetchItems({
         lastEvaluatedKey,
         index,
         queryType,
+        filters: filters.map(filter => {
+          if (filter.dataType) {
+            return filter
+          } else {
+            return {
+              ...filter,
+              dataType: filter.autoDetectedDataType
+            }
+          }
+        }),
         limit
       }
     })

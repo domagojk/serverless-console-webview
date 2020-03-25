@@ -1,3 +1,29 @@
+body .dynamodb-page {
+  font-size: 12px;
+}
+
+.dynamodb-page .str-limit-50px {
+  max-width: 50px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ant-select-dropdown-menu-item {
+  padding: 0px 12px !important;
+  line-height: 22px !important;
+}
+.ant-select-dropdown-menu {
+  max-height: 270px !important;
+}
+.dynamodb-page .comparator-select input {
+  text-align: center;
+  padding: 0;
+}
+.ant-select-dropdown--single {
+  min-width: 100px;
+}
+
 .dynamodb-page .BaseTable__row {
   background: var(--vscode-editor-background);
   border-bottom: 1px solid var(--vscode-breadcrumbPicker-background);
@@ -195,6 +221,22 @@
   border-bottom: 1px dotted var(--vscode-editor-selectionBackground);
 }
 
+.dynamodb-page .clipboard-info {
+  z-index: 100;
+  position: absolute;
+  background: var(--vscode-editor-selectionBackground);
+  border-radius: 5px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  font-weight: bold;
+  padding: 3px;
+}
+.dynamodb-page .cell-options {
+  z-index: 100;
+  position: absolute;
+  padding: 3px;
+}
+
 .dynamodb-page .BaseTable__row {
   user-select: none;
   cursor: default;
@@ -214,7 +256,9 @@
 .dynamodb-page .BaseTable__row.context-menu-hover {
   background: var(--vscode-editor-selectionBackground) !important;
 }
-
+.dynamodb-page .BaseTable__row.BaseTable__row--frozen {
+  background: var(--vscode-editor-wordHighlightStrongBackground);
+}
 .dynamodb-page .ant-checkbox-inner,
 .dynamodb-page .ant-checkbox-input:focus + .ant-checkbox-inner {
   background-color: transparent;
@@ -257,4 +301,26 @@
 .dynamodb-page .scan-query-group {
   margin-right: 20px;
   flex-shrink: 0;
+}
+
+.dynamodb-page .context-menu {
+  position: fixed;
+  z-index: 10;
+  outline: none;
+  border: 1px solid var(--vscode-dropdown-border);
+  background: #fff;
+}
+.dynamodb-page .context-menu ul {
+  width: 200px !important;
+}
+.dynamodb-page .context-menu .ant-menu-inline .ant-menu-item {
+  height: 24px;
+  line-height: 24px;
+  font-size: 11px;
+  padding-left: 10px !important;
+}
+.dynamodb-page .context-menu .ant-menu-inline .ant-menu-item .shortcut {
+  opacity: 0.6;
+  padding-left: 5px;
+  font-size: 0.85em;
 }

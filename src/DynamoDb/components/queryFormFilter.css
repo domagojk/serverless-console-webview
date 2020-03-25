@@ -40,3 +40,11 @@
   background: var(--vscode-sideBar-background);
   color: var(--vscode-editor-foreground);
 }
+.dynamodb-page
+  .query-filter
+  .ant-select-auto-complete.ant-select
+  .ant-input[disabled] {
+  color: var(--vscode-editor-foreground);
+  cursor: default;
+  opacity: 0.5;
+}

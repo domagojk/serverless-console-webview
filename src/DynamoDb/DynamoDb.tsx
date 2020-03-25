@@ -1,6 +1,8 @@
 import 'react-base-table/styles.css'
 import './dynamoDb.css'
+import './clipboardColumns.css'
 import React from 'react'
+import copy from 'copy-to-clipboard'
 import BaseTable, { AutoResizer } from 'react-base-table'
 import {
   dynamoDbFetchItems,
@@ -10,29 +12,32 @@ import {
   createItem
 } from '../asyncData/dynamoDb'
 import { postComponentMounted } from '../asyncData/asyncData'
-import {
-  Icon,
-  Button,
-  AutoComplete,
-  Input,
-  Dropdown,
-  Menu,
-  Radio,
-  Tooltip
-} from 'antd'
+import { Icon, Button, Tooltip, Menu } from 'antd'
 import { RelativeTime } from '../LogsPage/RelativeTime'
-import { ContextMenu } from './components/ContextMenu'
 import { QueryFormHeader } from './components/QueryFormHeader'
 import { QueryFormFilter } from './components/QueryFormFilter'
+
+export type QueryFilter = {
+  id: number
+  comparison: string
+  fieldName?: string
+  dataType?: string
+  autoDetectedDataType?: string
+  value?: string
+  valueSecond?: string
+  fieldNamePlaceholder?: string
+  keyCondition?: boolean
+}
 
 export class DynamoDb extends React.Component {
   state = {
     queryFilterVisible: true,
     queryFilters: [
       {
-        id: Math.random()
+        id: Math.random(),
+        comparison: '='
       }
-    ],
+    ] as QueryFilter[],
     commands: [] as {
       action: 'create' | 'update' | 'delete'
       id: string
@@ -52,13 +57,23 @@ export class DynamoDb extends React.Component {
     contextMenu: {
       top: 0,
       left: 0,
-      slcConsoleKey: null
+      slsConsoleKey: null
     },
     error: '',
     isFooterExpanded: false,
     commandHoverRows: [],
     lastSelected: null,
     sortBy: {},
+
+    frozenData: [],
+
+    clipboard: {} as {
+      top: number
+      left: number
+      data: string
+      rowIndex: number
+      cellIndex: number
+    },
 
     tableName: '',
     hashKey: '',
@@ -68,8 +83,9 @@ export class DynamoDb extends React.Component {
       name: string
       hashRangeKeys: string[]
     }[],
+    attributesSchema: {} as Record<string, string>,
 
-    selectedIndex: 0
+    selectedIndex: -1
   }
   contextMenuRef: React.RefObject<any>
 
@@ -80,11 +96,14 @@ export class DynamoDb extends React.Component {
 
   async componentDidMount() {
     const tableDesc = await dynamoDbTableDesc()
+
     this.setState({
       tableName: tableDesc.tableName,
       hashKey: tableDesc.hashKey,
       sortKey: tableDesc.sortKey,
-      indexes: tableDesc.indexes
+      indexes: tableDesc.indexes,
+      attributesSchema: tableDesc.attributesSchema,
+      selectedIndex: 0
     })
 
     await this.fetchItems()
@@ -132,6 +151,50 @@ export class DynamoDb extends React.Component {
         commandHoverRows: []
       })
     }
+
+    if (
+      prevState.selectedIndex !== this.state.selectedIndex ||
+      prevState.queryType !== this.state.queryType
+    ) {
+      const currentIndex = this.state.indexes[this.state.selectedIndex]
+
+      const hashType = this.state.attributesSchema[
+        currentIndex.hashRangeKeys[0]
+      ]
+      const rangeType = this.state.attributesSchema[
+        currentIndex.hashRangeKeys[1]
+      ]
+
+      if (this.state.queryType === 'query') {
+        this.setState({
+          queryFilters: [
+            {
+              id: Math.random(),
+              fieldName: currentIndex.hashRangeKeys[0],
+              comparison: '=',
+              keyCondition: true,
+              dataType: hashType === 'L' || hashType === 'M' ? 'B' : hashType
+            },
+            {
+              id: Math.random(),
+              fieldName: currentIndex.hashRangeKeys[1],
+              comparison: '=',
+              keyCondition: true,
+              dataType: rangeType === 'L' || rangeType === 'M' ? 'B' : rangeType
+            }
+          ]
+        })
+      } else {
+        this.setState({
+          queryFilters: [
+            {
+              id: Math.random(),
+              comparison: '='
+            }
+          ]
+        })
+      }
+    }
   }
 
   async cleanResults() {
@@ -149,8 +212,9 @@ export class DynamoDb extends React.Component {
           contextMenu: {
             top: 0,
             left: 0,
-            slcConsoleKey: null
-          }
+            slsConsoleKey: null
+          },
+          frozenData: []
         },
         resolve
       )
@@ -166,6 +230,7 @@ export class DynamoDb extends React.Component {
       const res = await dynamoDbFetchItems({
         lastEvaluatedKey: this.state.lastEvaluatedKey,
         queryType: this.state.queryType,
+        filters: this.state.queryFilters,
         index: this.state.indexes[this.state.selectedIndex].id
       })
 
@@ -227,7 +292,9 @@ export class DynamoDb extends React.Component {
             if (prevColumn) {
               return prevColumn
             }
-            const appPx = Math.round(res.columns[column] * 8.5)
+            const appPx = res.columns[column]
+              ? Math.round(res.columns[column] * 8.5)
+              : 0
 
             return {
               key: column,
@@ -242,6 +309,7 @@ export class DynamoDb extends React.Component {
         lastEvaluatedKey: res.lastEvaluatedKey
       })
     } catch (err) {
+      console.log(err)
       await this.cleanResults()
       this.setState({
         error: err
@@ -268,49 +336,117 @@ export class DynamoDb extends React.Component {
     return (
       <div className="dynamodb-page">
         <div className="main-wrapper">
-          {this.state.contextMenu?.slcConsoleKey !== null && (
-            <ContextMenu
+          {this.state.clipboard?.top && (
+            <div
+              className="clipboard-info"
+              style={{
+                top: this.state.clipboard.top,
+                left: this.state.clipboard.left
+              }}
+            >
+              <Icon type="copy" /> copied to clipboard
+            </div>
+          )}
+          {this.state.contextMenu?.slsConsoleKey !== null && (
+            <div
               ref={this.contextMenuRef}
+              className="context-menu"
+              tabIndex={1}
               onBlur={() => {
                 this.setState({
                   contextMenu: {
-                    slcConsoleKey: null
+                    slsConsoleKey: null
                   }
                 })
-              }}
-              onEdit={() => {
-                const slcConsoleKey = this.state.contextMenu.slcConsoleKey
-
-                editItem({
-                  queryType: this.state.queryType,
-                  index: this.state.indexes[this.state.selectedIndex].id,
-                  content: this.state.originalItems[slcConsoleKey],
-                  columns: this.state.columns.map(c => c.key)
-                })
-                this.contextMenuRef.current?.blur()
-              }}
-              onDelete={() => {
-                const slcConsoleKey = this.state.contextMenu.slcConsoleKey
-
-                deleteItem({
-                  hashKey: this.state.originalItems[slcConsoleKey][
-                    this.state.hashKey
-                  ],
-                  sortKey:
-                    this.state.sortKey !== undefined
-                      ? this.state.originalItems[slcConsoleKey][
-                          this.state.sortKey
-                        ]
-                      : null,
-                  tableName: this.state.tableName
-                })
-                this.contextMenuRef.current?.blur()
               }}
               style={{
                 top: this.state.contextMenu.top,
                 left: this.state.contextMenu.left
               }}
-            />
+            >
+              <Menu
+                style={{
+                  width: 135
+                }}
+                mode="inline"
+              >
+                <Menu.Item
+                  key="edit"
+                  onClick={() => {
+                    const slsConsoleKey = this.state.contextMenu.slsConsoleKey
+
+                    editItem({
+                      queryType: this.state.queryType,
+                      index: this.state.indexes[this.state.selectedIndex].id,
+                      content: this.state.originalItems[slsConsoleKey],
+                      columns: this.state.columns.map(c => c.key)
+                    })
+                    this.contextMenuRef.current?.blur()
+                  }}
+                >
+                  <Icon type="edit" /> Edit{' '}
+                  <span className="shortcut">or double click</span>
+                </Menu.Item>
+                <Menu.Item key="Copy">
+                  <Icon type="copy" /> Copy Column{' '}
+                  <span className="shortcut">or cmd + Click</span>
+                </Menu.Item>
+                <Menu.Item key="Copy-row">
+                  <Icon type="copy" /> Copy Row
+                </Menu.Item>
+                <Menu.Item
+                  key="sticky"
+                  onClick={() => {
+                    const slsConsoleKey = this.state.contextMenu.slsConsoleKey
+                    if (
+                      this.state.frozenData[0]?._slsConsoleKey === slsConsoleKey
+                    ) {
+                      this.setState({
+                        frozenData: []
+                      })
+                    } else {
+                      this.setState({
+                        frozenData: [this.state.originalItems[slsConsoleKey]]
+                      })
+                    }
+
+                    this.contextMenuRef.current?.blur()
+                  }}
+                >
+                  <Icon type="pushpin" />{' '}
+                  {this.state.contextMenu.slsConsoleKey ===
+                  this.state.frozenData[0]?._slsConsoleKey
+                    ? 'Remove Sticky Row'
+                    : 'Make Row Sticky'}
+                </Menu.Item>
+                <Menu.Item key="duplicate">
+                  <Icon type="copy" /> Duplicate Row
+                </Menu.Item>
+
+                <Menu.Item
+                  key="delete"
+                  onClick={() => {
+                    const slsConsoleKey = this.state.contextMenu.slsConsoleKey
+
+                    deleteItem({
+                      hashKey: this.state.originalItems[slsConsoleKey][
+                        this.state.hashKey
+                      ],
+                      sortKey:
+                        this.state.sortKey !== undefined
+                          ? this.state.originalItems[slsConsoleKey][
+                              this.state.sortKey
+                            ]
+                          : null,
+                      tableName: this.state.tableName
+                    })
+                    this.contextMenuRef.current?.blur()
+                  }}
+                >
+                  <Icon type="delete" /> Delete Item
+                </Menu.Item>
+              </Menu>
+            </div>
           )}
           <QueryFormHeader
             queryType={this.state.queryType}
@@ -339,6 +475,7 @@ export class DynamoDb extends React.Component {
           />
           {this.state.queryFilterVisible && (
             <QueryFormFilter
+              attributesSchema={this.state.attributesSchema}
               queryFilters={this.state.queryFilters}
               columns={this.state.columns}
               onFilterAdd={() => {
@@ -346,7 +483,8 @@ export class DynamoDb extends React.Component {
                   queryFilters: [
                     ...this.state.queryFilters,
                     {
-                      id: Math.random()
+                      id: Math.random(),
+                      comparison: '='
                     }
                   ]
                 })
@@ -356,6 +494,28 @@ export class DynamoDb extends React.Component {
                   queryFilters: this.state.queryFilters.filter(
                     f => f.id !== filterId
                   )
+                })
+              }}
+              onChange={(changedFilter: QueryFilter) => {
+                this.setState({
+                  queryFilters: this.state.queryFilters.map(filter => {
+                    if (filter.id === changedFilter.id) {
+                      if (!changedFilter.dataType) {
+                        return {
+                          ...changedFilter,
+                          autoDetectedDataType: autoDetectDataType({
+                            value: changedFilter.value,
+                            fieldName: changedFilter.fieldName,
+                            attributesSchema: this.state.attributesSchema
+                          })
+                        }
+                      } else {
+                        return changedFilter
+                      }
+                    } else {
+                      return filter
+                    }
+                  })
                 })
               }}
             />
@@ -369,6 +529,7 @@ export class DynamoDb extends React.Component {
                 {({ width, height }) => (
                   <BaseTable
                     fixed
+                    frozenData={this.state.frozenData}
                     data={this.state.items}
                     columns={this.state.columns}
                     rowKey="_slsConsoleKey"
@@ -386,6 +547,11 @@ export class DynamoDb extends React.Component {
                         c => c.compositKey === compositKey
                       )
 
+                      if (this.state.clipboard?.rowIndex === rowIndex) {
+                        classes +=
+                          ' clipboard-' + this.state.clipboard?.cellIndex
+                      }
+
                       if (this.state.commandHoverRows.includes(compositKey)) {
                         classes += ' command-hover'
                       }
@@ -396,14 +562,14 @@ export class DynamoDb extends React.Component {
                         classes += ' deleted-item'
                       }
                       if (
-                        this.state.contextMenu?.slcConsoleKey ===
+                        this.state.contextMenu?.slsConsoleKey ===
                         rowData._slsConsoleKey
                       ) {
                         classes += ' context-menu-hover'
                       }
                       return classes
                     }}
-                    cellProps={({ column, rowData }) => ({
+                    cellProps={({ column, rowData, rowIndex }) => ({
                       onDoubleClick: e => {
                         const compositKey = this.getCompositKey(rowData)
                         const command = this.state.commands.find(
@@ -421,10 +587,60 @@ export class DynamoDb extends React.Component {
                           columns: this.state.columns.map(c => c.key),
                           newData: command?.newData
                         })
-                      }
-                    })}
-                    rowEventHandlers={{
-                      onContextMenu: ({ event, rowData }) => {
+                      },
+                      onClick: e => {
+                        if (!e.metaKey) {
+                          return false
+                        }
+
+                        const originalItemProp = this.state.originalItems[
+                          rowData._slsConsoleKey
+                        ]?.[column.key]
+
+                        if (
+                          rowData[column.key] === undefined ||
+                          !originalItemProp
+                        ) {
+                          return false
+                        }
+
+                        const cellIndex =
+                          this.state.columns.findIndex(
+                            c => c.key === column.key
+                          ) + 1
+
+                        let targetNode =
+                          e.target.getAttribute('role') === 'gridcell'
+                            ? e.target
+                            : e.target.parentElement
+
+                        const coordinates = getOffset(targetNode.children[0])
+                        const rightLimit = window.innerWidth - 150
+
+                        copy(originalItemProp)
+
+                        this.setState({
+                          clipboard: {
+                            confirmed: false,
+                            rowIndex,
+                            cellIndex,
+                            top: coordinates.top - 22,
+                            left:
+                              coordinates.left < 0
+                                ? 0
+                                : coordinates.left > rightLimit
+                                ? rightLimit
+                                : coordinates.left
+                          }
+                        })
+
+                        setTimeout(() => {
+                          this.setState({
+                            clipboard: {}
+                          })
+                        }, 500)
+                      },
+                      onContextMenu: event => {
                         event.preventDefault()
                         if (rowData._slsConsoleKey === 'loadMore') {
                           return
@@ -435,7 +651,7 @@ export class DynamoDb extends React.Component {
                         this.setState(
                           {
                             contextMenu: {
-                              slcConsoleKey: rowData._slsConsoleKey,
+                              slsConsoleKey: rowData._slsConsoleKey,
                               top:
                                 event.pageY > maxHeight
                                   ? maxHeight
@@ -448,18 +664,10 @@ export class DynamoDb extends React.Component {
                             this.contextMenuRef.current?.focus()
                           }
                         )
-                      },
+                      }
+                    })}
+                    rowEventHandlers={{
                       onClick: ({ rowIndex, rowKey, rowData, event }) => {
-                        console.log(
-                          rowIndex,
-                          rowKey,
-                          rowData,
-                          event.screenX,
-                          event.screenY,
-                          event.metaKey,
-                          event.shiftKey
-                        )
-
                         /*this.setState({
                     selectedRows: this.state.selectedRows.includes(rowIndex)
                       ? this.state.selectedRows.filter(
@@ -474,14 +682,10 @@ export class DynamoDb extends React.Component {
                       if (rowData._slsConsoleKey === 'loadMore') {
                         return (
                           <div className="load-more">
-                            <Tooltip
-                              mouseEnterDelay={0.5}
-                              title={`${this.state.scannedCount} items scanned`}
-                            >
-                              <span className="fetched-message">
-                                Fetched {this.state.count} items
-                              </span>
-                            </Tooltip>
+                            <span className="fetched-message">
+                              Fetched {this.state.count} items (
+                              {this.state.scannedCount} scanned)
+                            </span>
 
                             {this.state.isLoading ? (
                               <span className="loadmore">loading...</span>
@@ -633,4 +837,28 @@ export class DynamoDb extends React.Component {
       </div>
     )
   }
+}
+
+function getOffset(el) {
+  var _x = 0
+  var _y = 0
+  while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
+    _x += el.offsetLeft - el.scrollLeft
+    _y += el.offsetTop - el.scrollTop
+    el = el.offsetParent
+  }
+  return { top: _y, left: _x }
+}
+
+function autoDetectDataType({ value, fieldName, attributesSchema }) {
+  if (attributesSchema?.[fieldName]) {
+    return attributesSchema?.[fieldName]
+  }
+  if (value === 'false' || value === 'true') {
+    return 'BOOL'
+  }
+  if (!isNaN(value)) {
+    return 'N'
+  }
+  return 'S'
 }
