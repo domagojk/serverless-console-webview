@@ -226,3 +226,9 @@ export function createItem() {
     command: 'createItem'
   })
 }
+
+export function execute() {
+  vscode.postMessage({
+    command: 'execute'
+  })
+}

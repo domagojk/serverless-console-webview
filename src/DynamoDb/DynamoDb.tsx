@@ -9,7 +9,8 @@ import {
   dynamoDbTableDesc,
   editItem,
   deleteItem,
-  createItem
+  createItem,
+  execute
 } from '../asyncData/dynamoDb'
 import { postComponentMounted } from '../asyncData/asyncData'
 import { Icon, Button, Tooltip, Menu } from 'antd'
@@ -807,6 +808,7 @@ export class DynamoDb extends React.Component {
                                 size="small"
                                 onClick={e => {
                                   e.currentTarget.blur()
+                                  execute()
                                 }}
                               >
                                 Execute
