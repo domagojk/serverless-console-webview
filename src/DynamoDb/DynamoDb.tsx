@@ -134,15 +134,6 @@ export class DynamoDb extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (
-      !this.state.isFooterExpanded &&
-      this.state.commands.length !== 0 &&
-      prevState.commands.length !== this.state.commands.length
-    ) {
-      this.setState({
-        isFooterExpanded: true
-      })
-    }
-    if (
       this.state.isFooterExpanded &&
       prevState.commands.length !== 0 &&
       this.state.commands.length === 0
