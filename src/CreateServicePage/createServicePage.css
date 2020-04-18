@@ -63,22 +63,23 @@
 }
 
 .button-box {
-  width: 90px;
+  width: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 10px;
-  height: 50px;
-  border: 1px solid var(--vscode-checkbox-border);
+  margin: 8px;
+  height: 45px;
+  border: 1px solid #88888824;
   justify-content: center;
   text-align: center;
   border-radius: 5px;
   background: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
-  font-weight: 500;
-  font-size: 0.8em;
+  font-weight: bold;
+  font-size: 11px;
   line-height: 1.9;
   cursor: pointer;
+  position: relative;
 }
 .button-box i {
   font-size: 30px;
@@ -92,6 +93,27 @@
 .button-box.active {
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+.button-box.pro span {
+  opacity: 0.3;
+}
+.button-box.pro.active span {
+  opacity: 1;
+}
+.button-box.pro span.sticker {
+  opacity: 1;
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  background: #00426f;
+  padding: 0 4px;
+  font-size: 9px;
+  border-radius: 2px;
+  height: 17px;
+  line-height: 17px;
+  color: #fff;
+  letter-spacing: 0.5px;
 }
 
 .form-table {

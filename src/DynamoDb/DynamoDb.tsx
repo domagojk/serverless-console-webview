@@ -10,17 +10,30 @@ import {
   editItem,
   deleteItem,
   createItem,
-  execute
+  execute,
+  discardChange,
+  openChange,
+  dynamodbOptions,
+  showLicenseDialog,
 } from '../asyncData/dynamoDb'
-import { postComponentMounted } from '../asyncData/asyncData'
-import { Icon, Button, Tooltip, Menu } from 'antd'
+import { Icon, Button, Tooltip, Menu, Checkbox } from 'antd'
 import { RelativeTime } from '../LogsPage/RelativeTime'
 import { QueryFormHeader } from './components/QueryFormHeader'
 import { QueryFormFilter } from './components/QueryFormFilter'
+import { getColumns, Column } from './getColumns'
+import { autoDetectDataType } from './autoDetectDataType'
+import { getDomOffset } from './getDomOffset'
+import { sortFunction } from './sortFunction'
+import { stringifyItems } from './stringifyItems'
+import { getLicense } from '../getLicense'
+import { buyLicense, enterLicense } from '../asyncData/asyncData'
 
-export type QueryFilter = {
+type QueryType = 'scan' | 'query'
+
+export interface QueryFilter {
   id: number
   comparison: string
+  comparisonLocked?: boolean
   fieldName?: string
   dataType?: string
   autoDetectedDataType?: string
@@ -30,64 +43,112 @@ export type QueryFilter = {
   keyCondition?: boolean
 }
 
-export class DynamoDb extends React.Component {
-  state = {
-    queryFilterVisible: true,
-    queryFilters: [
-      {
-        id: Math.random(),
-        comparison: '='
-      }
-    ] as QueryFilter[],
-    commands: [] as {
-      action: 'create' | 'update' | 'delete'
-      id: string
-      compositKey: string
-      timestamp: number
-      newData?: any
-      icon?: string
-    }[],
-    isLoading: false,
-    queryType: 'scan' as 'scan' | 'query',
-    count: 0,
-    scannedCount: 0,
-    lastEvaluatedKey: null,
-    columns: [],
-    originalItems: [],
-    items: [],
-    contextMenu: {
-      top: 0,
-      left: 0,
-      slsConsoleKey: null
+interface Change {
+  action: 'create' | 'update' | 'delete'
+  id: string
+  compositKey: string
+  timestamp: number
+  newData?: any
+  status?: 'inProgress' | 'error'
+  updatedData?: any
+  command?: any
+  error?: string
+  index: string
+  queryType: string
+  json: any
+}
+
+interface Index {
+  id?: string
+  name?: string
+  hashRangeKeys?: string[]
+}
+
+interface Item {
+  id: string
+  index: string
+  hashKey: string
+  sortKey: string
+  data: any[]
+}
+
+const initialState = {
+  license: getLicense(document.vscodeData.license),
+
+  isFooterExpanded: false,
+  isLoading: false,
+  reloadInProgress: false,
+
+  indexes: [] as Index[],
+
+  selectedQueryType: 'scan' as QueryType,
+  selectedIndex: 0,
+  selectedQueryFilters: [
+    {
+      id: Math.random(),
+      comparison: '=',
     },
-    error: '',
-    isFooterExpanded: false,
-    commandHoverRows: [],
-    lastSelected: null,
-    sortBy: {},
+  ] as QueryFilter[],
 
-    frozenData: [],
+  interrupted: false,
 
-    clipboard: {} as {
-      top: number
-      left: number
-      data: string
-      rowIndex: number
-      cellIndex: number
-    },
+  fetchedChanges: [] as Change[],
+  fetchedQueryFilters: [] as QueryFilter[],
+  fetchedIndex: 0,
+  fetchedQueryType: null as QueryType,
+  fetchedCount: 0,
+  fetchedScannedCount: 0,
+  fetchedTimestamp: 0,
+  fetchedLastEvaluatedKey: null,
+  fetchedItems: [] as Item[],
+  fetchedItemsWithChanges: [] as Item[],
 
-    tableName: '',
-    hashKey: '',
-    sortKey: '',
-    indexes: [] as {
-      id: string
-      name: string
-      hashRangeKeys: string[]
-    }[],
-    attributesSchema: {} as Record<string, string>,
+  itemsStringified: [] as any[],
 
-    selectedIndex: -1
-  }
+  columns: [] as Column[],
+  hiddenColumns: [] as string[],
+  sortBy: {} as {
+    key?: string
+    order?: string
+  },
+
+  selectedRows: [] as string[],
+  frozenData: [],
+
+  contextMenu: {
+    top: 0,
+    left: 0,
+    slsConsoleKey: null,
+  } as {
+    top?: number
+    left?: number
+    slsConsoleKey: string
+    rowData?: any
+    rowIndex?: any
+    column?: any
+    targetElement?: any
+  },
+  error: '',
+  changeHoverRows: [],
+
+  clipboard: {} as {
+    top?: number
+    left?: number
+    rowIndex?: number
+    cellIndex?: number
+  },
+
+  tableName: '',
+  attributesSchema: {} as Record<string, string>,
+  hashKey: '',
+  sortKey: null as string,
+}
+type State = typeof initialState
+
+const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+
+export class DynamoDb extends React.Component<any, State> {
+  state = initialState
   contextMenuRef: React.RefObject<any>
 
   constructor(props) {
@@ -100,53 +161,79 @@ export class DynamoDb extends React.Component {
 
     this.setState({
       tableName: tableDesc.tableName,
-      hashKey: tableDesc.hashKey,
-      sortKey: tableDesc.sortKey,
       indexes: tableDesc.indexes,
       attributesSchema: tableDesc.attributesSchema,
-      selectedIndex: 0
+      hashKey: tableDesc.hashKey,
+      sortKey: tableDesc.sortKey,
+      selectedIndex: 0,
     })
 
-    await this.fetchItems()
+    await this.fetchItems({
+      filters: this.state.selectedQueryFilters,
+      index: 0,
+      queryType: 'scan',
+      lastFetchResult: null,
+      lastEvaluatedKey: null,
+    })
 
-    window.addEventListener('message', event => {
-      if (event?.data?.type === 'defineDynamoDbCommands') {
-        this.setState({
-          commands: event.data.payload.map(command => {
-            return {
-              ...command,
-              icon:
-                command.action === 'create'
-                  ? 'plus-circle'
-                  : command.action === 'update'
-                  ? 'edit'
-                  : command.action === 'delete'
-                  ? 'close-circle'
-                  : ''
-            }
-          })
+    window.addEventListener('message', async (event) => {
+      if (event?.data?.type === 'changesUpdated') {
+        this.fetchItems({
+          filters: this.state.fetchedQueryFilters,
+          onlyRefreshCurrentItems: true,
+          index: this.state.fetchedIndex,
+          queryType: this.state.fetchedQueryType,
+          lastEvaluatedKey: null,
+          lastFetchResult: {
+            Count: this.state.fetchedCount,
+            Items: this.state.fetchedItems,
+            LastEvaluatedKey: this.state.fetchedLastEvaluatedKey,
+            ScannedCount: this.state.fetchedScannedCount,
+            timeFetched: this.state.fetchedTimestamp,
+          },
         })
       }
     })
 
-    postComponentMounted()
+    if (this.state.license?.deviceId && this.state.license?.invalid !== true) {
+      // check only if it's valid
+      // setState only if it is not valid
+      // ignore if request fails
+      fetch(
+        `https://api.serverlessconsole.com/checkLicenseWebview?deviceId=${this.state.license?.deviceId}&licenseKey=${this.state.license?.licenseKey}&mac=${isMac}`
+      )
+        .then((response) => {
+          return response.json()
+        })
+        .then((data) => {
+          if (data?.invalid) {
+            this.setState({
+              license: getLicense(data),
+            })
+          }
+        })
+        .catch(() => {})
+    }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState: State) {
+    // close footer if changes goes to 0
     if (
       this.state.isFooterExpanded &&
-      prevState.commands.length !== 0 &&
-      this.state.commands.length === 0
+      prevState.fetchedChanges.length !== 0 &&
+      this.state.fetchedChanges.length === 0
     ) {
       this.setState({
         isFooterExpanded: false,
-        commandHoverRows: []
+        changeHoverRows: [],
       })
     }
 
+    // if filter or query type is changed
+    // autofill fields from index
     if (
       prevState.selectedIndex !== this.state.selectedIndex ||
-      prevState.queryType !== this.state.queryType
+      prevState.selectedQueryType !== this.state.selectedQueryType
     ) {
       const currentIndex = this.state.indexes[this.state.selectedIndex]
 
@@ -157,175 +244,330 @@ export class DynamoDb extends React.Component {
         currentIndex.hashRangeKeys[1]
       ]
 
-      if (this.state.queryType === 'query') {
+      if (this.state.selectedQueryType === 'query') {
         this.setState({
-          queryFilters: [
+          selectedQueryFilters: [
             {
               id: Math.random(),
               fieldName: currentIndex.hashRangeKeys[0],
               comparison: '=',
+              comparisonLocked: true,
               keyCondition: true,
-              dataType: hashType === 'L' || hashType === 'M' ? 'B' : hashType
+              dataType: hashType === 'L' || hashType === 'M' ? 'B' : hashType,
             },
-            {
+            currentIndex.hashRangeKeys[1] && {
               id: Math.random(),
               fieldName: currentIndex.hashRangeKeys[1],
               comparison: '=',
               keyCondition: true,
-              dataType: rangeType === 'L' || rangeType === 'M' ? 'B' : rangeType
-            }
-          ]
+              dataType:
+                rangeType === 'L' || rangeType === 'M' ? 'B' : rangeType,
+            },
+          ].filter((val) => val !== undefined),
         })
       } else {
         this.setState({
-          queryFilters: [
+          selectedQueryFilters: [
             {
               id: Math.random(),
-              comparison: '='
-            }
-          ]
+              comparison: '=',
+            },
+          ],
         })
       }
+    }
+
+    // if no items, but there is loadmore
+    if (
+      this.state.interrupted === false &&
+      prevState.isLoading === true &&
+      this.state.isLoading === false &&
+      this.state.fetchedItemsWithChanges.length === 0 &&
+      this.state.fetchedLastEvaluatedKey
+    ) {
+      this.fetchItems({
+        filters: this.state.fetchedQueryFilters,
+        index: this.state.fetchedIndex,
+        queryType: this.state.fetchedQueryType,
+        lastEvaluatedKey: this.state.fetchedLastEvaluatedKey,
+        lastFetchResult: {
+          Count: this.state.fetchedCount,
+          Items: this.state.fetchedItems,
+          LastEvaluatedKey: this.state.fetchedLastEvaluatedKey,
+          ScannedCount: this.state.fetchedScannedCount,
+          timeFetched: this.state.fetchedTimestamp,
+        },
+      })
     }
   }
 
   async cleanResults() {
-    return new Promise(resolve =>
+    return new Promise((resolve) =>
       this.setState(
         {
           isLoading: false,
+
+          fetchedQueryType: null,
+          fetchedIndex: 0,
+          fetchedQueryFilters: [],
+          fetchedLastEvaluatedKey: null,
+          fetchedItems: [],
+          fetchedTimestamp: 0,
+          fetchedCount: 0,
+          fetchedScannedCount: 0,
+          fetchedItemsWithChanges: [],
+
           error: '',
-          count: 0,
-          scannedCount: 0,
-          lastEvaluatedKey: null,
-          columns: [],
-          originalItems: [],
-          items: [],
           contextMenu: {
             top: 0,
             left: 0,
-            slsConsoleKey: null
+            slsConsoleKey: null,
           },
-          frozenData: []
+          frozenData: [],
+          interrupted: false,
+          itemsStringified: [],
+          columns: [],
+          hiddenColumns: [],
+          sortBy: {},
         },
         resolve
       )
     )
   }
 
-  async fetchItems() {
-    this.setState({
-      isLoading: true
-    })
-
+  async fetchItems({
+    onlyRefreshCurrentItems,
+    filters,
+    index,
+    queryType,
+    lastFetchResult,
+    lastEvaluatedKey,
+  }: {
+    queryType: QueryType
+    index: number
+    filters: QueryFilter[]
+    lastEvaluatedKey: any
+    onlyRefreshCurrentItems?: boolean
+    lastFetchResult: {
+      Count: number
+      LastEvaluatedKey: any
+      ScannedCount: number
+      Items: Item[]
+      timeFetched: number
+    }
+  }) {
     try {
-      const res = await dynamoDbFetchItems({
-        lastEvaluatedKey: this.state.lastEvaluatedKey,
-        queryType: this.state.queryType,
-        filters: this.state.queryFilters,
-        index: this.state.indexes[this.state.selectedIndex].id
+      if (onlyRefreshCurrentItems && !lastFetchResult) {
+        return null
+      }
+
+      this.setState({
+        isLoading: onlyRefreshCurrentItems ? false : true,
       })
 
-      const index = this.state.indexes[this.state.selectedIndex]
+      const currentIndex = this.state.indexes[index]
 
-      let columnNames =
-        this.state.columns.length === 0
-          ? index.hashRangeKeys
-          : this.state.columns.map(c => c.key)
+      const res = await dynamoDbFetchItems({
+        lastEvaluatedKey,
+        queryType,
+        filters,
+        index: currentIndex.id,
+        lastFetchResult,
+        onlyRefreshCurrentItems: onlyRefreshCurrentItems,
+      })
 
-      Object.keys(res.countPerColumn)
-        .sort((a, b) => {
-          return res.countPerColumn[b] - res.countPerColumn[a]
-        })
-        .forEach(column => {
-          if (!columnNames.includes(column)) {
-            // push new column if not found in previous query
-            // can not just use res.columns because the order of columns
-            // is not preserved in that case
-            columnNames.push(column)
-          }
-        })
+      const columns = getColumns({
+        currentColumns: this.state.columns,
+        countPerColumn: res.countPerColumn,
+        widthPerColumn: res.widthPerColumn,
+        hashKey: this.state.hashKey,
+        sortKey: this.state.sortKey,
+        indexHashRangeKeys: currentIndex.hashRangeKeys,
+      })
 
-      const currentItems = this.state.items.filter(
-        item => item._slsConsoleKey !== 'loadMore'
+      const sortBy = index === this.state.fetchedIndex ? this.state.sortBy : {}
+
+      const itemsStringified = stringifyItems(res.changedItems).sort(
+        sortFunction(sortBy)
       )
 
-      const newItems = [...currentItems, ...res.items].map((item, index) => {
-        const stringified = Object.keys(item).reduce((acc, curr) => {
-          return {
-            ...acc,
-            [curr]:
-              typeof item[curr] === 'object'
-                ? JSON.stringify(item[curr], null, 2)
-                : item[curr]
-          }
-        }, {})
-
-        return {
-          ...stringified,
-          _slsConsoleKey: index
-        }
-      })
-
       this.setState({
-        isLoading: false,
-        count: this.state.count + res.count,
-        scannedCount: this.state.scannedCount + res.scannedCount,
-        originalItems: [...this.state.originalItems, ...res.items],
-        items: [
-          ...newItems,
-          {
-            _slsConsoleKey: 'loadMore'
-          }
-        ],
-        columns: [
-          ...columnNames.map(column => {
-            const prevColumn = this.state.columns.find(c => c.key === column)
-            if (prevColumn) {
-              return prevColumn
-            }
-            const appPx = res.columns[column]
-              ? Math.round(res.columns[column] * 8.5)
-              : 0
+        fetchedQueryFilters: [...filters],
+        fetchedIndex: index,
+        fetchedQueryType: queryType,
+        fetchedCount: res.count,
+        fetchedScannedCount: res.scannedCount,
+        fetchedLastEvaluatedKey: res.lastEvaluatedKey,
+        fetchedItems: res.items,
+        fetchedItemsWithChanges: res.changedItems,
+        fetchedTimestamp: res.timeFetched,
+        fetchedChanges: res.changes,
 
-            return {
-              key: column,
-              dataKey: column,
-              title: column,
-              resizable: true,
-              sortable: true,
-              width: appPx < 70 ? 70 : appPx > 400 ? 400 : appPx
-            }
-          })
-        ],
-        lastEvaluatedKey: res.lastEvaluatedKey
+        isLoading: false,
+        itemsStringified,
+        sortBy,
+        columns,
       })
     } catch (err) {
-      console.log(err)
       await this.cleanResults()
       this.setState({
-        error: err
+        error: err,
       })
     }
   }
 
-  onColumnSort = sortBy => {
-    console.log(sortBy)
-
-    /*this.setState({
-      data: this.state.data.reverse(),
-      sortBy
-    })*/
+  onColumnSort = (sortBy) => {
+    this.setState({
+      itemsStringified: this.state.itemsStringified.sort(sortFunction(sortBy)),
+      sortBy,
+    })
   }
 
-  getCompositKey = rowData => {
-    return !this.state.sortKey
-      ? rowData[this.state.hashKey]
-      : `${rowData[this.state.hashKey]}-${rowData[this.state.sortKey]}`
+  getRowClassName = ({ rowIndex, rowData }) => {
+    let classes = ''
+    const slsKey = rowData._slsConsoleKey
+
+    if (slsKey === 'loadMore') {
+      return ''
+    }
+    const changes = this.state.fetchedChanges
+      .filter(
+        (c) =>
+          c.compositKey === slsKey &&
+          c.index === this.state.indexes[this.state.fetchedIndex].id &&
+          c.queryType === this.state.fetchedQueryType
+      )
+      .sort((a, b) => {
+        // making delete a priority change
+        if (a.action === 'delete') {
+          return -1
+        }
+        if (b.action === 'delete') {
+          return 1
+        }
+        return 0
+      })
+
+    const change = changes.length ? changes[0] : null
+
+    if (this.state.clipboard?.rowIndex === rowIndex) {
+      classes += ' clipboard-' + this.state.clipboard?.cellIndex
+    }
+
+    if (this.state.selectedRows.includes(slsKey)) {
+      classes += ' selected-hover'
+    }
+    if (this.state.changeHoverRows.includes(slsKey)) {
+      classes += ' change-hover'
+    }
+    if (change && change.action === 'update') {
+      classes += ' updated-item'
+    }
+    if (change && change.action === 'delete') {
+      classes += ' deleted-item'
+    }
+    return classes
+  }
+
+  onSearch = async () => {
+    // todo disable search if searching, add stop button
+    const selectedQueryFilters = this.state.selectedQueryFilters.filter(
+      (filter) => !(!filter.fieldName && filter.value === undefined)
+    )
+
+    await new Promise((resolve) =>
+      this.setState(
+        {
+          selectedQueryFilters:
+            selectedQueryFilters.length === 0
+              ? [
+                  {
+                    id: Math.random(),
+                    comparison: '=',
+                  },
+                ]
+              : selectedQueryFilters,
+        },
+        resolve
+      )
+    )
+
+    await this.cleanResults()
+    await this.fetchItems({
+      filters: this.state.selectedQueryFilters,
+      index: this.state.selectedIndex,
+      queryType: this.state.selectedQueryType,
+      lastFetchResult: null,
+      lastEvaluatedKey: null,
+    })
+  }
+
+  copyToClipboard({ rowData, rowIndex, column, targetElement }) {
+    const originalItemProp = this.state.itemsStringified.find(
+      (item) => item._slsConsoleKey === rowData._slsConsoleKey
+    )[column]
+
+    if (rowData[column] === undefined || originalItemProp === undefined) {
+      return false
+    }
+
+    const cellIndex = this.state.columns.findIndex((c) => c.key === column) + 1
+
+    let targetNode =
+      targetElement.getAttribute('role') === 'gridcell'
+        ? targetElement
+        : targetElement.parentElement
+
+    const coordinates = getDomOffset(targetNode.children[0])
+    const rightLimit = window.innerWidth - 150
+
+    copy(originalItemProp)
+
+    this.setState({
+      clipboard: {
+        rowIndex,
+        cellIndex,
+        top: coordinates.top - 22,
+        left:
+          coordinates.left < 0
+            ? 0
+            : coordinates.left > rightLimit
+            ? rightLimit
+            : coordinates.left,
+      },
+    })
+
+    setTimeout(() => {
+      this.setState({
+        clipboard: {},
+      })
+    }, 500)
   }
 
   render() {
-    return (
+    const selectedS = this.state.selectedRows.length > 1 ? 's' : ''
+
+    return this.state.license?.invalid ? (
+      <div className="license-invalid">
+        {this.state.license.inTrial ? (
+          <div>
+            <span>Your Serverless Console PRO trial period has expired</span>
+            <Button onClick={() => buyLicense()}>Buy Now</Button>
+            <Button className="secondary" onClick={() => enterLicense()}>
+              Enter License Key
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <span>Your Serverless Console PRO license has expired</span>
+            <Button onClick={() => buyLicense()}>Renew</Button>
+            <Button className="secondary" onClick={() => enterLicense()}>
+              Enter License Key
+            </Button>
+          </div>
+        )}
+      </div>
+    ) : (
       <div className="dynamodb-page">
         <div className="main-wrapper">
           {this.state.clipboard?.top && (
@@ -333,7 +575,7 @@ export class DynamoDb extends React.Component {
               className="clipboard-info"
               style={{
                 top: this.state.clipboard.top,
-                left: this.state.clipboard.left
+                left: this.state.clipboard.left,
               }}
             >
               <Icon type="copy" /> copied to clipboard
@@ -347,18 +589,19 @@ export class DynamoDb extends React.Component {
               onBlur={() => {
                 this.setState({
                   contextMenu: {
-                    slsConsoleKey: null
-                  }
+                    slsConsoleKey: null,
+                  },
+                  selectedRows: [],
                 })
               }}
               style={{
                 top: this.state.contextMenu.top,
-                left: this.state.contextMenu.left
+                left: this.state.contextMenu.left,
               }}
             >
               <Menu
                 style={{
-                  width: 135
+                  width: 135,
                 }}
                 mode="inline"
               >
@@ -366,39 +609,130 @@ export class DynamoDb extends React.Component {
                   key="edit"
                   onClick={() => {
                     const slsConsoleKey = this.state.contextMenu.slsConsoleKey
+                    const item = this.state.fetchedItemsWithChanges.find(
+                      (item) => item.id === slsConsoleKey
+                    )
 
                     editItem({
-                      queryType: this.state.queryType,
-                      index: this.state.indexes[this.state.selectedIndex].id,
-                      content: this.state.originalItems[slsConsoleKey],
-                      columns: this.state.columns.map(c => c.key)
+                      queryType: this.state.fetchedQueryType,
+                      index: this.state.indexes[this.state.fetchedIndex].id,
+                      content: item.data,
+                      columns: this.state.columns.map((c) => c.key),
+                      hashKey: item.hashKey,
+                      sortKey: item.sortKey,
                     })
                     this.contextMenuRef.current?.blur()
                   }}
                 >
                   <Icon type="edit" /> Edit{' '}
-                  <span className="shortcut">or double click</span>
+                  <span className="shortcut">double click</span>
                 </Menu.Item>
-                <Menu.Item key="Copy">
-                  <Icon type="copy" /> Copy Column{' '}
-                  <span className="shortcut">or cmd + Click</span>
+
+                <Menu.Item
+                  key="duplicate"
+                  onClick={() => {
+                    const slsConsoleKey = this.state.contextMenu.slsConsoleKey
+                    const item = this.state.fetchedItemsWithChanges.find(
+                      (item) => item.id === slsConsoleKey
+                    )
+                    createItem(item.data)
+                    this.contextMenuRef.current?.blur()
+                  }}
+                >
+                  <Icon type="file-add" /> Duplicate Row
                 </Menu.Item>
-                <Menu.Item key="Copy-row">
+
+                <Menu.Item
+                  key="delete"
+                  onClick={() => {
+                    for (const slsConsoleKey of this.state.selectedRows) {
+                      //const slsConsoleKey = this.state.contextMenu.slsConsoleKey
+                      const item = this.state.fetchedItemsWithChanges.find(
+                        (item) => item.id === slsConsoleKey
+                      )
+
+                      deleteItem({
+                        queryType: this.state.fetchedQueryType,
+                        index: item.index,
+                        hashKey: item.hashKey,
+                        sortKey: item.sortKey,
+                        tableName: this.state.tableName,
+                      })
+                    }
+                    this.contextMenuRef.current?.blur()
+                  }}
+                >
+                  <Icon type="delete" /> Delete Item{selectedS}
+                </Menu.Item>
+
+                <hr style={{ opacity: 0.3 }} />
+
+                {this.state.contextMenu?.rowData[
+                  this.state.contextMenu?.column?.key
+                ] && (
+                  <Menu.Item
+                    key="Copy"
+                    onClick={() => {
+                      this.copyToClipboard({
+                        rowData: this.state.contextMenu.rowData,
+                        rowIndex: this.state.contextMenu.rowIndex,
+                        targetElement: this.state.contextMenu.targetElement,
+                        column: this.state.contextMenu.column?.key,
+                      })
+                      this.contextMenuRef.current?.blur()
+                    }}
+                  >
+                    <Icon type="copy" /> Copy Column{' '}
+                    <span className="shortcut">
+                      {isMac ? 'Cmd' : 'Ctrl'} + Click
+                    </span>
+                  </Menu.Item>
+                )}
+
+                <Menu.Item
+                  key="Copy-row"
+                  onClick={() => {
+                    const item = this.state.fetchedItemsWithChanges.find(
+                      (item) => item.id === this.state.contextMenu.slsConsoleKey
+                    )
+                    copy(JSON.stringify(item.data, null, 2))
+                    this.contextMenuRef.current?.blur()
+                  }}
+                >
                   <Icon type="copy" /> Copy Row
                 </Menu.Item>
+
+                <hr style={{ opacity: 0.3 }} />
                 <Menu.Item
-                  key="sticky"
+                  key="pin"
                   onClick={() => {
                     const slsConsoleKey = this.state.contextMenu.slsConsoleKey
                     if (
-                      this.state.frozenData[0]?._slsConsoleKey === slsConsoleKey
+                      this.state.frozenData.find(
+                        (item) => item._slsConsoleKey === slsConsoleKey
+                      )
                     ) {
                       this.setState({
-                        frozenData: []
+                        frozenData: this.state.frozenData.filter(
+                          (item) => item._slsConsoleKey !== slsConsoleKey
+                        ),
                       })
                     } else {
                       this.setState({
-                        frozenData: [this.state.originalItems[slsConsoleKey]]
+                        frozenData: [
+                          ...this.state.frozenData,
+                          ...this.state.itemsStringified.filter(
+                            (item) =>
+                              // is not already pinned
+                              !this.state.frozenData
+                                .map((i) => i._slsConsoleKey)
+                                .includes(item._slsConsoleKey) &&
+                              // is selected
+                              this.state.selectedRows.includes(
+                                item._slsConsoleKey
+                              )
+                          ),
+                        ],
                       })
                     }
 
@@ -406,91 +740,135 @@ export class DynamoDb extends React.Component {
                   }}
                 >
                   <Icon type="pushpin" />{' '}
-                  {this.state.contextMenu.slsConsoleKey ===
-                  this.state.frozenData[0]?._slsConsoleKey
-                    ? 'Remove Sticky Row'
-                    : 'Make Row Sticky'}
-                </Menu.Item>
-                <Menu.Item key="duplicate">
-                  <Icon type="copy" /> Duplicate Row
+                  {this.state.frozenData
+                    .map((i) => i._slsConsoleKey)
+                    .includes(this.state.contextMenu.slsConsoleKey)
+                    ? 'Unpin Row'
+                    : `Pin Row${selectedS}`}
                 </Menu.Item>
 
-                <Menu.Item
-                  key="delete"
-                  onClick={() => {
-                    const slsConsoleKey = this.state.contextMenu.slsConsoleKey
+                {this.state.fetchedChanges.find(
+                  (c) =>
+                    c.compositKey === this.state.contextMenu.slsConsoleKey &&
+                    c.index ===
+                      this.state.indexes[this.state.fetchedIndex].id &&
+                    c.queryType === this.state.fetchedQueryType
+                ) && [
+                  <hr style={{ opacity: 0.3 }} />,
+                  this.state.selectedRows.length === 1 && (
+                    <Menu.Item
+                      key="open-change"
+                      onClick={async () => {
+                        const change = this.state.fetchedChanges.find(
+                          (c) =>
+                            c.compositKey === this.state.selectedRows[0] &&
+                            c.index ===
+                              this.state.indexes[this.state.fetchedIndex].id &&
+                            c.queryType === this.state.fetchedQueryType
+                        )
 
-                    deleteItem({
-                      hashKey: this.state.originalItems[slsConsoleKey][
-                        this.state.hashKey
-                      ],
-                      sortKey:
-                        this.state.sortKey !== undefined
-                          ? this.state.originalItems[slsConsoleKey][
-                              this.state.sortKey
-                            ]
-                          : null,
-                      tableName: this.state.tableName
-                    })
-                    this.contextMenuRef.current?.blur()
-                  }}
-                >
-                  <Icon type="delete" /> Delete Item
-                </Menu.Item>
+                        if (change) {
+                          openChange(change.id)
+                        }
+                      }}
+                    >
+                      <Icon type="select" /> Open Change
+                    </Menu.Item>
+                  ),
+                  <Menu.Item
+                    key="discard-change"
+                    onClick={async () => {
+                      for (const slsConsoleKey of this.state.selectedRows) {
+                        const changes = this.state.fetchedChanges.filter(
+                          (c) =>
+                            c.compositKey === slsConsoleKey &&
+                            c.index ===
+                              this.state.indexes[this.state.fetchedIndex].id &&
+                            c.queryType === this.state.fetchedQueryType
+                        )
+
+                        this.contextMenuRef.current?.blur()
+
+                        for (const change of changes) {
+                          await discardChange(change.id)
+                        }
+                      }
+                    }}
+                  >
+                    <Icon type="close" /> Discard Change{selectedS}
+                  </Menu.Item>,
+                ]}
               </Menu>
             </div>
           )}
           <QueryFormHeader
-            queryType={this.state.queryType}
+            queryType={this.state.selectedQueryType}
             indexes={this.state.indexes}
+            license={this.state.license}
             selectedIndex={this.state.selectedIndex}
-            onQueryTypeChange={queryType => {
+            onQueryTypeChange={(queryType) => {
               this.setState({
-                queryType
+                selectedQueryType: queryType,
               })
             }}
-            onIndexChange={selectedIndex => {
+            onIndexChange={(selectedIndex) => {
               this.setState({
-                selectedIndex
+                selectedIndex,
               })
             }}
-            queryFilterVisible={this.state.queryFilterVisible}
-            onQueryFilterClick={() => {
-              this.setState({
-                queryFilterVisible: !this.state.queryFilterVisible
-              })
-            }}
-            onSearch={async () => {
-              await this.cleanResults()
-              await this.fetchItems()
+            onLicenseClick={() => {
+              showLicenseDialog()
             }}
           />
-          {this.state.queryFilterVisible && (
-            <QueryFormFilter
-              attributesSchema={this.state.attributesSchema}
-              queryFilters={this.state.queryFilters}
-              columns={this.state.columns}
-              onFilterAdd={() => {
-                this.setState({
-                  queryFilters: [
-                    ...this.state.queryFilters,
-                    {
-                      id: Math.random(),
-                      comparison: '='
-                    }
-                  ]
-                })
-              }}
-              onFilterRemove={filterId => {
-                this.setState({
-                  queryFilters: this.state.queryFilters.filter(
-                    f => f.id !== filterId
+          <QueryFormFilter
+            attributesSchema={this.state.attributesSchema}
+            queryFilters={this.state.selectedQueryFilters}
+            columns={this.state.columns}
+            onFilterAdd={() => {
+              this.setState({
+                selectedQueryFilters: [
+                  ...this.state.selectedQueryFilters,
+                  {
+                    id: Math.random(),
+                    comparison: '=',
+                  },
+                ],
+              })
+            }}
+            onFilterRemove={(filterId) => {
+              const newFilters = this.state.selectedQueryFilters.filter(
+                (f) => f.id !== filterId
+              )
+              this.setState({
+                selectedQueryFilters: newFilters.length
+                  ? newFilters
+                  : [
+                      {
+                        id: Math.random(),
+                        comparison: '=',
+                      },
+                    ],
+              })
+            }}
+            searchButtonLabel={
+              this.state.isLoading
+                ? 'Fetching...'
+                : this.state.selectedQueryType ===
+                    this.state.fetchedQueryType &&
+                  this.state.selectedIndex === this.state.fetchedIndex &&
+                  areArrayFieldsEqual(
+                    this.state.selectedQueryFilters,
+                    this.state.fetchedQueryFilters,
+                    ['fieldName', 'comparison', 'value', 'valueSecond']
                   )
-                })
-              }}
-              onChange={(changedFilter: QueryFilter) => {
-                this.setState({
-                  queryFilters: this.state.queryFilters.map(filter => {
+                ? 'Refresh'
+                : 'Search'
+            }
+            onEnter={this.onSearch}
+            onChange={(changedFilter: QueryFilter) => {
+              this.setState({
+                selectedQueryFilters: this.state.selectedQueryFilters.map(
+                  (filter) => {
                     if (filter.id === changedFilter.id) {
                       if (!changedFilter.dataType) {
                         return {
@@ -498,8 +876,8 @@ export class DynamoDb extends React.Component {
                           autoDetectedDataType: autoDetectDataType({
                             value: changedFilter.value,
                             fieldName: changedFilter.fieldName,
-                            attributesSchema: this.state.attributesSchema
-                          })
+                            attributesSchema: this.state.attributesSchema,
+                          }),
                         }
                       } else {
                         return changedFilter
@@ -507,11 +885,11 @@ export class DynamoDb extends React.Component {
                     } else {
                       return filter
                     }
-                  })
-                })
-              }}
-            />
-          )}
+                  }
+                ),
+              })
+            }}
+          />
 
           <div className="table-wrapper">
             {this.state.error ? (
@@ -522,8 +900,76 @@ export class DynamoDb extends React.Component {
                   <BaseTable
                     fixed
                     frozenData={this.state.frozenData}
-                    data={this.state.items}
-                    columns={this.state.columns}
+                    data={this.state.itemsStringified}
+                    columns={[
+                      {
+                        width: 22,
+                        flexShrink: 0,
+                        resizable: false,
+                        frozen: 'left',
+                        key: '__selection__',
+                        headerRenderer: () => {
+                          return this.state.fetchedItems.length === 0 ? null : (
+                            <Checkbox
+                              className="header-checkbox"
+                              onChange={(e) => {
+                                this.setState({
+                                  selectedRows: e.target.checked
+                                    ? this.state.itemsStringified.map(
+                                        (i) => i._slsConsoleKey
+                                      )
+                                    : [],
+                                })
+                              }}
+                            />
+                          )
+                        },
+                        cellRenderer: ({ rowData, rowIndex }) => {
+                          if (rowIndex < 0) {
+                            return (
+                              <Tooltip title="Unpin row" placement="right">
+                                <Icon
+                                  style={{ paddingLeft: 2 }}
+                                  type="pushpin"
+                                  onClick={() => {
+                                    this.setState({
+                                      frozenData: this.state.frozenData.filter(
+                                        (item) =>
+                                          item._slsConsoleKey !==
+                                          rowData._slsConsoleKey
+                                      ),
+                                    })
+                                  }}
+                                />
+                              </Tooltip>
+                            )
+                          }
+                          const isChecked = this.state.selectedRows.includes(
+                            rowData._slsConsoleKey
+                          )
+                          return (
+                            <Checkbox
+                              checked={isChecked}
+                              onChange={(e) => {
+                                this.setState({
+                                  selectedRows: !e.target.checked
+                                    ? this.state.selectedRows.filter(
+                                        (id) => id !== rowData._slsConsoleKey
+                                      )
+                                    : [
+                                        ...this.state.selectedRows,
+                                        rowData._slsConsoleKey,
+                                      ],
+                                })
+                              }}
+                            />
+                          )
+                        },
+                      },
+                      ...this.state.columns.filter(
+                        (c) => !this.state.hiddenColumns?.includes(c.key)
+                      ),
+                    ]}
                     rowKey="_slsConsoleKey"
                     width={width}
                     height={height}
@@ -532,107 +978,38 @@ export class DynamoDb extends React.Component {
                     footerHeight={this.state.isFooterExpanded ? 240 : 40}
                     sortBy={this.state.sortBy}
                     onColumnSort={this.onColumnSort}
-                    rowClassName={({ rowIndex, rowData }) => {
-                      let classes = ''
-                      const compositKey = this.getCompositKey(rowData)
-                      const command = this.state.commands.find(
-                        c => c.compositKey === compositKey
-                      )
-
-                      if (this.state.clipboard?.rowIndex === rowIndex) {
-                        classes +=
-                          ' clipboard-' + this.state.clipboard?.cellIndex
-                      }
-
-                      if (this.state.commandHoverRows.includes(compositKey)) {
-                        classes += ' command-hover'
-                      }
-                      if (command && command.action === 'update') {
-                        classes += ' updated-item'
-                      }
-                      if (command && command.action === 'delete') {
-                        classes += ' deleted-item'
-                      }
-                      if (
-                        this.state.contextMenu?.slsConsoleKey ===
-                        rowData._slsConsoleKey
-                      ) {
-                        classes += ' context-menu-hover'
-                      }
-                      return classes
-                    }}
+                    rowClassName={this.getRowClassName}
                     cellProps={({ column, rowData, rowIndex }) => ({
-                      onDoubleClick: e => {
-                        const compositKey = this.getCompositKey(rowData)
-                        const command = this.state.commands.find(
-                          c => c.compositKey === compositKey
+                      onDoubleClick: (e) => {
+                        if (column.key === '__selection__') {
+                          return null
+                        }
+                        const item = this.state.fetchedItemsWithChanges.find(
+                          (item) => item.id === rowData._slsConsoleKey
                         )
 
                         editItem({
-                          queryType: this.state.queryType,
-                          index: this.state.indexes[this.state.selectedIndex]
-                            .id,
-                          content: this.state.originalItems[
-                            rowData._slsConsoleKey
-                          ],
+                          queryType: this.state.fetchedQueryType,
+                          index: this.state.indexes[this.state.fetchedIndex].id,
+                          content: item.data,
                           selectColumn: column.dataKey,
-                          columns: this.state.columns.map(c => c.key),
-                          newData: command?.newData
+                          columns: this.state.columns.map((c) => c.key),
+                          hashKey: item.hashKey,
+                          sortKey: item.sortKey,
                         })
                       },
-                      onClick: e => {
+                      onClick: (e) => {
                         if (!e.metaKey) {
                           return false
                         }
-
-                        const originalItemProp = this.state.originalItems[
-                          rowData._slsConsoleKey
-                        ]?.[column.key]
-
-                        if (
-                          rowData[column.key] === undefined ||
-                          !originalItemProp
-                        ) {
-                          return false
-                        }
-
-                        const cellIndex =
-                          this.state.columns.findIndex(
-                            c => c.key === column.key
-                          ) + 1
-
-                        let targetNode =
-                          e.target.getAttribute('role') === 'gridcell'
-                            ? e.target
-                            : e.target.parentElement
-
-                        const coordinates = getOffset(targetNode.children[0])
-                        const rightLimit = window.innerWidth - 150
-
-                        copy(originalItemProp)
-
-                        this.setState({
-                          clipboard: {
-                            confirmed: false,
-                            rowIndex,
-                            cellIndex,
-                            top: coordinates.top - 22,
-                            left:
-                              coordinates.left < 0
-                                ? 0
-                                : coordinates.left > rightLimit
-                                ? rightLimit
-                                : coordinates.left
-                          }
+                        this.copyToClipboard({
+                          rowData,
+                          rowIndex,
+                          targetElement: e.target,
+                          column: column.key,
                         })
-
-                        setTimeout(() => {
-                          this.setState({
-                            clipboard: {}
-                          })
-                        }, 500)
                       },
-                      onContextMenu: event => {
+                      onContextMenu: (event) => {
                         event.preventDefault()
                         if (rowData._slsConsoleKey === 'loadMore') {
                           return
@@ -649,48 +1026,116 @@ export class DynamoDb extends React.Component {
                                   ? maxHeight
                                   : event.pageY,
                               left:
-                                event.pageX > maxWidth ? maxWidth : event.pageX
-                            }
+                                event.pageX > maxWidth ? maxWidth : event.pageX,
+                              rowData,
+                              rowIndex,
+                              column,
+                              targetElement: event.target,
+                            },
+                            selectedRows: [
+                              ...this.state.selectedRows,
+                              rowData._slsConsoleKey,
+                            ],
                           },
                           () => {
                             this.contextMenuRef.current?.focus()
                           }
                         )
-                      }
+                      },
                     })}
-                    rowEventHandlers={{
-                      onClick: ({ rowIndex, rowKey, rowData, event }) => {
-                        /*this.setState({
-                    selectedRows: this.state.selectedRows.includes(rowIndex)
-                      ? this.state.selectedRows.filter(
-                          index => index !== rowIndex
-                        )
-                      : [...this.state.selectedRows, rowIndex],
-                    lastSelected: rowIndex
-                  })*/
-                      }
+                    emptyRenderer={() => {
+                      return (
+                        <div className="load-more">
+                          <span className="fetched-message">
+                            Fetched {this.state.fetchedCount} items (
+                            {this.state.fetchedScannedCount} scanned)
+                          </span>
+                          {this.state.isLoading && (
+                            <span className="loadmore">loading...</span>
+                          )}
+                          {this.state.interrupted === false &&
+                            this.state.fetchedLastEvaluatedKey && (
+                              <span
+                                className="spanlink"
+                                onClick={() => {
+                                  this.setState({
+                                    interrupted: true,
+                                  })
+                                }}
+                              >
+                                Stop
+                              </span>
+                            )}
+                        </div>
+                      )
                     }}
-                    rowRenderer={({ rowData, cells }) => {
+                    rowRenderer={({ rowData, cells, columns }) => {
                       if (rowData._slsConsoleKey === 'loadMore') {
+                        if (
+                          columns.length === 1 &&
+                          columns[0].key === '__selection__'
+                        ) {
+                          // helper table for selections with only one cell
+                          return null
+                        }
                         return (
                           <div className="load-more">
                             <span className="fetched-message">
-                              Fetched {this.state.count} items (
-                              {this.state.scannedCount} scanned)
+                              Fetched {this.state.fetchedCount} items (
+                              {this.state.fetchedScannedCount} scanned)
                             </span>
 
                             {this.state.isLoading ? (
                               <span className="loadmore">loading...</span>
                             ) : (
-                              this.state.lastEvaluatedKey && (
-                                <span
-                                  className="spanlink loadmore"
-                                  onClick={() => {
-                                    this.fetchItems()
-                                  }}
-                                >
-                                  Load more
-                                </span>
+                              this.state.fetchedLastEvaluatedKey && (
+                                <>
+                                  {this.state.sortBy.key && (
+                                    <span
+                                      className="spanlink"
+                                      onClick={() => {
+                                        this.setState({
+                                          itemsStringified: stringifyItems(
+                                            this.state.fetchedItemsWithChanges
+                                          ),
+                                          sortBy: {},
+                                        })
+                                      }}
+                                    >
+                                      Remove Sort
+                                      <Tooltip
+                                        title="If sorting is not removed, new items are merged with old ones, rather than appended at the end."
+                                        placement="top"
+                                      >
+                                        <Icon type="info-circle" />
+                                      </Tooltip>
+                                    </span>
+                                  )}
+                                  <span
+                                    className="spanlink"
+                                    onClick={() => {
+                                      this.fetchItems({
+                                        filters: this.state.fetchedQueryFilters,
+                                        index: this.state.fetchedIndex,
+                                        queryType: this.state.fetchedQueryType,
+                                        lastEvaluatedKey: this.state
+                                          .fetchedLastEvaluatedKey,
+                                        lastFetchResult: {
+                                          Count: this.state.fetchedCount,
+                                          Items: this.state.fetchedItems,
+                                          LastEvaluatedKey: this.state
+                                            .fetchedLastEvaluatedKey,
+                                          ScannedCount: this.state
+                                            .fetchedScannedCount,
+                                          timeFetched: this.state
+                                            .fetchedTimestamp,
+                                        },
+                                      })
+                                    }}
+                                  >
+                                    Load more
+                                  </span>
+                                </>
                               )
                             )}
                           </div>
@@ -705,54 +1150,77 @@ export class DynamoDb extends React.Component {
                             <div className="table-wrapper">
                               <table className="log-table">
                                 <tbody>
-                                  {this.state.commands.map(command => (
-                                    <tr
-                                      key={command.id}
-                                      className="command-row"
-                                      onMouseEnter={() => {
-                                        this.setState({
-                                          commandHoverRows: command.compositKey
-                                        })
-                                      }}
-                                      onMouseLeave={() => {
-                                        this.setState({
-                                          commandHoverRows: []
-                                        })
-                                      }}
-                                    >
-                                      <td className="operation">
-                                        <span className={command.action}>
-                                          <Icon type={command.icon} />
-                                          {command.action?.toUpperCase()}
-                                        </span>
-                                      </td>
-                                      <td className="timestamp">
-                                        <RelativeTime
-                                          time={command.timestamp}
-                                        />
-                                      </td>
-                                      <td className="primary-key">
-                                        {command.compositKey}
-                                      </td>
-                                      <td className="icons">
-                                        <Tooltip
-                                          title="Discard command"
-                                          placement="left"
-                                        >
-                                          <Icon
-                                            type="delete"
-                                            onClick={() => {
-                                              this.setState({
-                                                commands: this.state.commands.filter(
-                                                  c => c.id !== command.id
-                                                )
-                                              })
-                                            }}
+                                  {this.state.fetchedChanges.map(
+                                    (change, index) => (
+                                      <tr
+                                        key={`${change.id}-${index}`}
+                                        className={
+                                          change.status === 'error'
+                                            ? 'change-row error'
+                                            : 'change-row'
+                                        }
+                                        onMouseEnter={() => {
+                                          this.setState({
+                                            changeHoverRows: [
+                                              change.compositKey,
+                                            ],
+                                          })
+                                        }}
+                                        onMouseLeave={() => {
+                                          this.setState({
+                                            changeHoverRows: [],
+                                          })
+                                        }}
+                                        onClick={() => {
+                                          openChange(change.id)
+                                        }}
+                                      >
+                                        <td className="operation">
+                                          <span className={change.action}>
+                                            {change.status === 'inProgress' ? (
+                                              <Icon type="loading" />
+                                            ) : (
+                                              <Icon
+                                                type={
+                                                  change.action === 'update'
+                                                    ? 'edit'
+                                                    : change.action === 'create'
+                                                    ? 'plus-circle'
+                                                    : 'close-circle'
+                                                }
+                                                className="change-icon"
+                                              />
+                                            )}
+                                            {change.status === 'error'
+                                              ? 'ERROR'
+                                              : change.action?.toUpperCase()}
+                                          </span>
+                                        </td>
+                                        <td className="timestamp">
+                                          <RelativeTime
+                                            time={change.timestamp}
                                           />
-                                        </Tooltip>
-                                      </td>
-                                    </tr>
-                                  ))}
+                                        </td>
+                                        <td className="primary-key">
+                                          {change.compositKey}
+                                        </td>
+                                        <td className="icons">
+                                          <Tooltip
+                                            title="Discard change"
+                                            placement="left"
+                                          >
+                                            <Icon
+                                              type="close"
+                                              onClick={(e) => {
+                                                discardChange(change.id)
+                                                e.stopPropagation() // parent tr onClick handler is not triggered
+                                              }}
+                                            />
+                                          </Tooltip>
+                                        </td>
+                                      </tr>
+                                    )
+                                  )}
                                 </tbody>
                               </table>
                             </div>
@@ -766,25 +1234,67 @@ export class DynamoDb extends React.Component {
                                 createItem()
                               }}
                             />
-                            <Icon type="reload" />
-                            <Icon type="setting" />
+                            <Icon
+                              type={
+                                this.state.reloadInProgress ? 'loading' : 'sync'
+                              }
+                              onClick={async () => {
+                                this.setState({
+                                  fetchedCount: 0,
+                                  fetchedLastEvaluatedKey: null,
+                                  fetchedScannedCount: 0,
+                                  fetchedItems: [],
+                                  fetchedTimestamp: 0,
+                                  reloadInProgress: true,
+                                })
+                                await this.fetchItems({
+                                  filters: this.state.fetchedQueryFilters,
+                                  index: this.state.fetchedIndex,
+                                  queryType: this.state.fetchedQueryType,
+                                  lastFetchResult: null,
+                                  lastEvaluatedKey: null,
+                                })
+                                this.setState({
+                                  reloadInProgress: false,
+                                })
+                              }}
+                            />
+                            <Icon
+                              onClick={async () => {
+                                const res = await dynamodbOptions(
+                                  this.state.columns.map((column) => {
+                                    return {
+                                      label: column.key,
+                                      picked: !this.state.hiddenColumns.includes(
+                                        column.key
+                                      ),
+                                    }
+                                  })
+                                )
+
+                                this.setState({
+                                  hiddenColumns: res.hiddenColumns,
+                                })
+                              }}
+                              type="setting"
+                            />
                           </div>
 
                           <div className="footer-right">
-                            {this.state.commands.length ? (
+                            {this.state.fetchedChanges.length ? (
                               <span
                                 className="queue-message"
                                 onClick={() => {
                                   this.setState({
                                     isFooterExpanded: !this.state
-                                      .isFooterExpanded
+                                      .isFooterExpanded,
                                   })
                                 }}
                               >
-                                <span className="commands-num">
-                                  {this.state.commands.length}
+                                <span className="changes-num">
+                                  {this.state.fetchedChanges.length}
                                 </span>
-                                staged commands
+                                staged changes
                                 <Icon
                                   type={
                                     this.state.isFooterExpanded ? 'down' : 'up'
@@ -793,12 +1303,15 @@ export class DynamoDb extends React.Component {
                               </span>
                             ) : null}
 
-                            {this.state.isFooterExpanded ? (
+                            {this.state.fetchedChanges.length ? (
                               <Button
                                 type="primary"
                                 size="small"
-                                onClick={e => {
+                                onClick={(e) => {
                                   e.currentTarget.blur()
+                                  this.setState({
+                                    isFooterExpanded: true,
+                                  })
                                   execute()
                                 }}
                               >
@@ -811,7 +1324,7 @@ export class DynamoDb extends React.Component {
                                 style={{
                                   opacity: 0.2,
                                   cursor: 'default',
-                                  pointerEvents: 'none'
+                                  pointerEvents: 'none',
                                 }}
                               >
                                 Execute
@@ -832,26 +1345,21 @@ export class DynamoDb extends React.Component {
   }
 }
 
-function getOffset(el) {
-  var _x = 0
-  var _y = 0
-  while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
-    _x += el.offsetLeft - el.scrollLeft
-    _y += el.offsetTop - el.scrollTop
-    el = el.offsetParent
-  }
-  return { top: _y, left: _x }
-}
-
-function autoDetectDataType({ value, fieldName, attributesSchema }) {
-  if (attributesSchema?.[fieldName]) {
-    return attributesSchema?.[fieldName]
-  }
-  if (value === 'false' || value === 'true') {
-    return 'BOOL'
-  }
-  if (!isNaN(value)) {
-    return 'N'
-  }
-  return 'S'
+function areArrayFieldsEqual(arr1: any, arr2: any, fields: string[]) {
+  return (
+    arr1
+      ?.map((arrVal) =>
+        fields.reduce((acc, field) => {
+          return `${acc}-${arrVal[field] || ''}`
+        }, '')
+      )
+      .toString() ===
+    arr2
+      ?.map((arrVal) =>
+        fields.reduce((acc, field) => {
+          return `${acc}-${arrVal[field] || ''}`
+        }, '')
+      )
+      .toString()
+  )
 }

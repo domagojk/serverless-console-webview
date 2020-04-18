@@ -1,6 +1,6 @@
 import './queryFormFilter.css'
-import React from 'react'
-import { Icon, AutoComplete, Input } from 'antd'
+import React, { useRef } from 'react'
+import { Icon, AutoComplete, Input, Button } from 'antd'
 import { QueryFilter } from '../DynamoDb'
 
 const allTypes = [
@@ -15,14 +15,14 @@ const allTypes = [
   'Not exists',
   'Contains',
   'Not contains',
-  'Begins with'
+  'Begins with',
 ]
 const types = {
   S: allTypes,
   B: allTypes,
   N: ['=', '≠', '<=', '<', '>=', '>', 'Between', 'Exists', 'Not exists'],
   BOOL: ['=', '≠', 'Exists', 'Not exists'],
-  NULL: ['Exists', 'Not exists']
+  NULL: ['Exists', 'Not exists'],
 }
 
 const mapLongToShort = {
@@ -30,34 +30,44 @@ const mapLongToShort = {
   Number: 'N',
   Boolean: 'BOOL',
   Null: 'NULL',
-  Binary: 'B'
+  Binary: 'B',
 }
 const mapShortToLong = {
   S: 'String',
   N: 'Number',
   BOOL: 'Boolean',
   NULL: 'Null',
-  B: 'Binary'
+  B: 'Binary',
 }
 
 export function QueryFormFilter({
   queryFilters,
   columns,
   attributesSchema,
+  searchButtonLabel,
   onFilterAdd,
   onFilterRemove,
-  onChange
+  onChange,
+  onEnter,
 }: {
   queryFilters: QueryFilter[]
   attributesSchema: Record<string, string>
   columns: any[]
+  searchButtonLabel: string
   onFilterAdd: any
   onFilterRemove: any
   onChange: any
+  onEnter: any
 }) {
+  const fieldNameLastFilter = useRef(null)
+  const onFilterAddWithFocus = () => {
+    onFilterAdd()
+    setTimeout(() => fieldNameLastFilter?.current?.focus())
+  }
+
   return (
     <div className="query-filter">
-      {queryFilters.map(filter => {
+      {queryFilters.map((filter, index) => {
         const dataType = filter.dataType
           ? filter.dataType
           : filter.autoDetectedDataType
@@ -65,21 +75,24 @@ export function QueryFormFilter({
         return (
           <div className="query-filter-item" key={filter.id}>
             <AutoComplete
+              ref={
+                index === queryFilters.length - 1 ? fieldNameLastFilter : null
+              }
               style={{ width: 130, marginRight: 5 }}
               disabled={filter.keyCondition}
               dataSource={columns
-                .map(c => c.key)
-                .filter(
-                  val => !filter.fieldName || val.startsWith(filter.fieldName)
-                )}
-              value={filter.fieldName}
-              placeholder="Field name"
-              onChange={value =>
+                .map((c) => c.key)
+                .filter((val) => {
+                  return !filter.fieldName || val.startsWith(filter.fieldName)
+                })}
+              onChange={(value) => {
                 onChange({
                   ...filter,
-                  fieldName: value
+                  fieldName: value,
                 })
-              }
+              }}
+              value={filter.fieldName}
+              placeholder="Field name"
             />
             <AutoComplete
               style={{ width: 70, marginRight: 5 }}
@@ -88,10 +101,11 @@ export function QueryFormFilter({
                 types[attributesSchema?.[filter?.fieldName]] || allTypes
               }
               value={filter.comparison}
-              onChange={value =>
+              disabled={filter.comparisonLocked}
+              onChange={(value) =>
                 onChange({
                   ...filter,
-                  comparison: value
+                  comparison: value,
                 })
               }
             />
@@ -102,12 +116,13 @@ export function QueryFormFilter({
                   style={{ width: 130, marginRight: 5 }}
                   placeholder="Enter value"
                   value={filter.value}
-                  onChange={e => {
+                  onChange={(e) => {
                     onChange({
                       ...filter,
-                      value: e.target.value
+                      value: e.target.value,
                     })
                   }}
+                  onPressEnter={onEnter}
                 />
               )}
             {filter.comparison === 'Between' && (
@@ -115,56 +130,90 @@ export function QueryFormFilter({
                 <Input
                   style={{ width: 60, marginRight: 5 }}
                   value={filter.valueSecond}
-                  onChange={e => {
+                  onChange={(e) => {
                     onChange({
                       ...filter,
-                      valueSecond: e.target.value
+                      valueSecond: e.target.value,
                     })
                   }}
+                  onPressEnter={onEnter}
                 />
                 <span>and</span>
                 <Input
                   style={{ width: 60, marginRight: 5 }}
                   value={filter.valueSecond}
-                  onChange={e => {
+                  onChange={(e) => {
                     onChange({
                       ...filter,
-                      valueSecond: e.target.value
+                      valueSecond: e.target.value,
                     })
                   }}
+                  onPressEnter={onEnter}
                 />
               </>
             )}
 
-            {(filter.dataType || filter.value !== undefined) && (
-              <AutoComplete
-                style={{ width: 70, marginRight: 5 }}
-                disabled={filter.keyCondition}
-                dataSource={Object.keys(mapLongToShort)}
-                value={mapShortToLong[dataType]}
-                onChange={(value: string) => {
-                  onChange({
-                    ...filter,
-                    dataType: mapLongToShort[value]
-                  })
-                }}
-              />
-            )}
-            {!filter.keyCondition && (
-              <Icon
-                type="minus-circle"
-                className="item-remove item-add-remove"
-                onClick={() => {
-                  onFilterRemove(filter.id)
-                }}
-              />
-            )}
+            <AutoComplete
+              style={{ width: 70, marginRight: 5 }}
+              disabled={filter.keyCondition}
+              dataSource={Object.keys(mapLongToShort)}
+              onChange={(value: string) => {
+                onChange({
+                  ...filter,
+                  dataType: mapLongToShort[value],
+                })
+              }}
+              value={dataType ? mapShortToLong[dataType] : 'String'}
+            >
+              <Input onPressEnter={onEnter} />
+            </AutoComplete>
+
+            {
+              // if it is key condition of a query
+              filter.keyCondition ||
+              // or a only filter with no values
+              (index === 0 &&
+                !filter.value &&
+                !filter.fieldName &&
+                filter.comparison === '=' &&
+                queryFilters.length === 1) ? null : (
+                <Icon
+                  type="minus-circle"
+                  className="item-remove item-add-remove"
+                  onClick={() => {
+                    onFilterRemove(filter.id)
+                  }}
+                />
+              )
+            }
           </div>
         )
       })}
-      <span className="item-add-remove add-field-icon" onClick={onFilterAdd}>
-        <Icon type="plus-circle" /> Add field
-      </span>
+      <div className="options-below-filters">
+        <span className="item-add-remove" onClick={onFilterAddWithFocus}>
+          <Icon type="plus-circle" /> Add field
+        </span>
+        <Input
+          style={{
+            opacity: 0,
+            position: 'absolute',
+            pointerEvents: 'none',
+            width: 0,
+            height: 0,
+          }}
+          onFocus={onFilterAddWithFocus}
+        />
+      </div>
+      <Button
+        tabIndex={0}
+        disabled={searchButtonLabel === 'Fetching...'}
+        className="search-button"
+        type="primary"
+        size="small"
+        onClick={onEnter}
+      >
+        {searchButtonLabel}
+      </Button>
     </div>
   )
 }

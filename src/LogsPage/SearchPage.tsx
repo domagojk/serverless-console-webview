@@ -151,33 +151,55 @@ export class SearchPage extends React.Component<
     })
 
     const queryId = this.state.queriesStatus[queryRef].queryId
-    const res = await getQueryResults({ queryId, ref: queryRef })
 
-    this.setState({
-      queriesStatus: {
-        ...this.state.queriesStatus,
-        [queryRef]: {
-          ...this.state.queriesStatus[queryRef],
-          isRunning:
-            res.status !== 'Complete' &&
-            res.status !== 'Failed' &&
-            res.status !== 'Cancelled'
-              ? true
-              : false,
-          status: res.status,
-          stats: res.statistics,
-          resultsWithoutMatches: res.results,
-          resultsWithMatches: prepareMessagesArr(
-            res.results,
-            true,
-            this.state.searchStr
-          )
-        }
+    try {
+      const res = await getQueryResults({
+        queryId,
+        ref: queryRef,
+        region: this.props.region,
+      })
+
+      this.setState({
+        queriesStatus: {
+          ...this.state.queriesStatus,
+          [queryRef]: {
+            ...this.state.queriesStatus[queryRef],
+            isRunning:
+              res.status !== 'Complete' &&
+              res.status !== 'Failed' &&
+              res.status !== 'Cancelled'
+                ? true
+                : false,
+            status: res.status,
+            stats: res.statistics,
+            resultsWithoutMatches: res.results,
+            resultsWithMatches: prepareMessagesArr(
+              res.results,
+              true,
+              this.state.searchStr
+            ),
+          },
+        },
+      })
+
+      if (res.status === 'Running' || res.status === 'Scheduled') {
+        setTimeout(() => this.getQueryResults(queryRef), 1000)
       }
-    })
-
-    if (res.status === 'Running' || res.status === 'Scheduled') {
-      setTimeout(() => this.getQueryResults(queryRef), 1000)
+    } catch (err) {
+      console.log(err)
+      this.setState({
+        queriesStatus: {
+          ...this.state.queriesStatus,
+          [queryRef]: {
+            ...this.state.queriesStatus[queryRef],
+            error: err.message,
+            isRunning: false,
+            status: 'Failed',
+            resultsWithoutMatches: [],
+            resultsWithMatches: []
+          },
+        },
+      })
     }
   }
 
@@ -470,8 +492,12 @@ export class SearchPage extends React.Component<
 
         <FetchingStatus activeQuery={activeQuery} />
 
-        {activeQuery.resultsWithMatches &&
-        activeQuery.resultsWithMatches.length ? (
+        {
+          activeQuery.error && (
+            <div>{activeQuery.error}</div>
+          )}
+          {activeQuery.resultsWithMatches &&
+            activeQuery.resultsWithMatches.length ? (
           <div className="results">
             <Collapse key="collapse" bordered={false}>
               {activeQuery.resultsWithMatches.map(message => {

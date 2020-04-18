@@ -1,0 +1,24 @@
+.pro-feature button,
+.pro-feature button:focus {
+  background: var(--vscode-button-background);
+  border-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  font-size: 12px;
+  margin: 5px 10px;
+  padding: 5px;
+}
+.pro-feature button:hover {
+  background: var(--vscode-button-foreground);
+  color: var(--vscode-button-background);
+}
+.pro-feature button.secondary,
+.pro-feature button.secondary:focus {
+  background: var(--vscode-badge-background);
+  border-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+.pro-feature button.secondary:hover {
+  background: var(--vscode-badge-foreground);
+  border-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-background);
+}

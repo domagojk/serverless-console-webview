@@ -38,11 +38,12 @@ body .dynamodb-page {
 .dynamodb-page .BaseTable__table-main {
   outline: none;
 }
+.dynamodb-page .BaseTable__table .BaseTable__header,
 .dynamodb-page .BaseTable__table-main,
 .dynamodb-page .BaseTable__table,
 .dynamodb-page .BaseTable__empty-layer,
 .dynamodb-page .BaseTable {
-  background: none;
+  background: var(--vscode-editor-background);
   box-shadow: none;
 }
 
@@ -66,7 +67,9 @@ body .dynamodb-page {
   display: flex;
   flex-direction: column;
 }
-.dynamodb-page button {
+.dynamodb-page button,
+.dynamodb-page button[disabled],
+.dynamodb-page button:focus {
   background: var(--vscode-button-background);
   border-color: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
@@ -76,13 +79,16 @@ body .dynamodb-page {
   background: var(--vscode-button-hoverBackground);
   border-color: var(--vscode-button-hoverBackground);
 }
+.dynamodb-page button[disabled] {
+  opacity: 0.8;
+}
 
 .dynamodb-page .table-wrapper {
-  margin-top: 5px;
+  margin: 4px 8px 0;
 }
 .dynamodb-page .log-table-wrapper {
   height: 200px;
-  padding: 10px 15px;
+  padding: 5px 0px;
   padding-bottom: 0;
 }
 .dynamodb-page .log-table-wrapper .table-wrapper {
@@ -93,10 +99,13 @@ body .dynamodb-page {
 .dynamodb-page .log-table {
   width: 100%;
 }
-.dynamodb-page .log-table .command-row {
+.dynamodb-page .log-table .change-row.error {
+  color: var(--vscode-minimap-errorHighlight);
+}
+.dynamodb-page .log-table .change-row {
   cursor: pointer;
 }
-.dynamodb-page .log-table .command-row:hover {
+.dynamodb-page .log-table .change-row:hover {
   background: var(--vscode-editor-findRangeHighlightBackground);
 }
 .dynamodb-page .footer-right {
@@ -118,7 +127,7 @@ body .dynamodb-page {
   margin-left: 5px;
 }
 
-.dynamodb-page .footer-right .commands-num {
+.dynamodb-page .footer-right .changes-num {
   padding: 0px 6px;
   color: var(--vscode-activityBarBadge-foreground);
   background: var(--vscode-activityBarBadge-background);
@@ -138,7 +147,8 @@ body .dynamodb-page {
   text-align: right;
 }
 .dynamodb-page .log-table .icons i {
-  padding-right: 10px;
+  padding: 5px;
+  font-size: 11px;
 }
 .dynamodb-page i:hover {
   cursor: pointer;
@@ -164,13 +174,13 @@ body .dynamodb-page {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.dynamodb-page .log-table .operation .create i {
+.dynamodb-page .log-table .change-row:not(.error) .create i.change-icon {
   color: var(--vscode-gitDecoration-addedResourceForeground);
 }
-.dynamodb-page .log-table .operation .update i {
+.dynamodb-page .log-table .change-row:not(.error) .update i.change-icon {
   color: var(--vscode-gitDecoration-modifiedResourceForeground);
 }
-.dynamodb-page .log-table .operation .delete i {
+.dynamodb-page .log-table .change-row:not(.error) .delete i.change-icon {
   color: var(--vscode-gitDecoration-deletedResourceForeground);
 }
 
@@ -180,6 +190,12 @@ body .dynamodb-page {
   position: sticky;
   left: calc(50% - 200px);
   width: 400px;
+}
+.dynamodb-page .load-more .spanlink {
+  margin-left: 10px;
+}
+.dynamodb-page .load-more .spanlink i {
+  margin-left: 5px;
 }
 .dynamodb-page .footer-wrapper {
   display: flex;
@@ -191,6 +207,8 @@ body .dynamodb-page {
 }
 .dynamodb-page .BaseTable__footer {
   background: var(--vscode-sideBar-background);
+  margin-left: -8px;
+  margin-right: -8px;
 }
 .dynamodb-page .footer-wrapper .footer-center {
   flex: 1 1 auto;
@@ -207,9 +225,6 @@ body .dynamodb-page {
   display: flex;
 }
 
-.dynamodb-page .footer-wrapper .loadmore {
-  margin: 0 10px;
-}
 .dynamodb-page .BaseTable {
   font-size: 1em;
 }
@@ -241,28 +256,55 @@ body .dynamodb-page {
   user-select: none;
   cursor: default;
 }
+.dynamodb-page .BaseTable__row.created-item {
+  color: var(--vscode-gitDecoration-addedResourceForeground);
+}
 .dynamodb-page .BaseTable__row.updated-item {
   color: var(--vscode-gitDecoration-modifiedResourceForeground);
 }
 .dynamodb-page .BaseTable__row.deleted-item {
   color: var(--vscode-gitDecoration-deletedResourceForeground);
 }
-.dynamodb-page .BaseTable__row.command-hover {
+.dynamodb-page .BaseTable__row.change-hover {
   background: var(--vscode-editor-findRangeHighlightBackground);
 }
-.dynamodb-page .BaseTable__row:not(:last-child):hover {
+.dynamodb-page .BaseTable__row.selected-hover {
+  background: var(--vscode-editor-wordHighlightStrongBackground) !important;
+}
+.dynamodb-page .BaseTable__row--hovered:not(:last-child) {
   background: var(--vscode-breadcrumbPicker-background);
 }
-.dynamodb-page .BaseTable__row.context-menu-hover {
+.dynamodb-page .BaseTable__row.BaseTable__row--frozen {
   background: var(--vscode-editor-selectionBackground) !important;
 }
-.dynamodb-page .BaseTable__row.BaseTable__row--frozen {
-  background: var(--vscode-editor-wordHighlightStrongBackground);
+.dynamodb-page .BaseTable__header {
+  user-select: none;
+}
+.dynamodb-page .BaseTable__header-cell--sortable:hover {
+  background-color: var(--vscode-breadcrumbPicker-background);
+}
+.dynamodb-page .BaseTable__header-cell--resizing .BaseTable__column-resizer {
+  background-color: var(--vscode-checkbox-border);
+  width: 2px;
+}
+.dynamodb-page .BaseTable__header-cell:hover .BaseTable__column-resizer {
+  background-color: var(--vscode-checkbox-border);
+}
+.dynamodb-page .BaseTable__resizing-line {
+  width: 2px;
+  background-color: var(--vscode-checkbox-border);
 }
 .dynamodb-page .ant-checkbox-inner,
 .dynamodb-page .ant-checkbox-input:focus + .ant-checkbox-inner {
   background-color: transparent;
   border: 1px solid var(--vscode-checkbox-border);
+}
+.dynamodb-page .header-checkbox .ant-checkbox {
+  top: 0;
+  opacity: 0;
+}
+.dynamodb-page .header-checkbox .ant-checkbox:hover {
+  opacity: 1;
 }
 
 .dynamodb-page .footer-left i {
@@ -323,4 +365,49 @@ body .dynamodb-page {
   opacity: 0.6;
   padding-left: 5px;
   font-size: 0.85em;
+}
+.dynamodb-page
+  .BaseTable__table-frozen-left
+  .BaseTable__header-cell:first-child,
+.BaseTable__table-frozen-left .BaseTable__row-cell:first-child {
+  padding-left: 2px;
+  opacity: 0.8;
+}
+.dynamodb-page .ant-checkbox-checked .ant-checkbox-inner:after {
+  margin-left: 0px;
+  margin-top: -1px;
+  border-color: var(--vscode-editor-foreground);
+  transition: none;
+}
+.dynamodb-page .ant-checkbox-inner {
+  width: 14px;
+  height: 14px;
+}
+
+.license-invalid {
+  padding: 20px;
+}
+.license-invalid button,
+.license-invalid button:focus {
+  background: var(--vscode-button-background);
+  border-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  font-size: 12px;
+  margin: 5px;
+  padding: 5px;
+}
+.license-invalid button:hover {
+  background: var(--vscode-button-foreground);
+  color: var(--vscode-button-background);
+}
+.license-invalid button.secondary,
+.license-invalid button.secondary:focus {
+  background: var(--vscode-badge-background);
+  border-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+.license-invalid button.secondary:hover {
+  background: var(--vscode-badge-foreground);
+  border-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-background);
 }

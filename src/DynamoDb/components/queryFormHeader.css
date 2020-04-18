@@ -4,15 +4,24 @@
   flex-direction: row;
   margin-left: 10px;
   margin-top: 10px;
+  margin-bottom: 5px;
+  justify-content: space-between;
 }
 .dynamodb-page .query-form .index-dropdown {
-  margin-right: 20px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: default;
 }
 .dynamodb-page .query-form .index-dropdown i {
   margin-left: 5px;
+}
+.dynamodb-page .query-form .trial-counter {
+  margin-right: 10px;
+  cursor: pointer;
+}
+.dynamodb-page .query-form .trial-counter:hover {
+  opacity: 0.8;
 }
 
 .dynamodb-page .query-form .right {
@@ -45,4 +54,8 @@
 .dynamodb-page .query-form .right .iconwrapper i {
   padding-top: 9px;
   padding-right: 3px;
+}
+.ant-dropdown-menu-vertical .ant-dropdown-menu-item {
+  font-size: 12px;
+  line-height: 18px;
 }
