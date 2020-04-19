@@ -25,7 +25,7 @@ import { autoDetectDataType } from './autoDetectDataType'
 import { getDomOffset } from './getDomOffset'
 import { sortFunction } from './sortFunction'
 import { stringifyItems } from './stringifyItems'
-import { getLicense } from '../getLicense'
+import { getLicense, License } from '../getLicense'
 import { buyLicense, enterLicense } from '../asyncData/asyncData'
 
 type QueryType = 'scan' | 'query'
@@ -72,54 +72,45 @@ interface Item {
   data: any[]
 }
 
-const initialState = {
-  license: getLicense(document.vscodeData.license),
+type State = {
+  license: License
 
-  isFooterExpanded: false,
-  isLoading: false,
-  reloadInProgress: false,
+  isFooterExpanded: boolean
+  isLoading: boolean
+  reloadInProgress: boolean
 
-  indexes: [] as Index[],
+  indexes: Index[]
 
-  selectedQueryType: 'scan' as QueryType,
-  selectedIndex: 0,
-  selectedQueryFilters: [
-    {
-      id: Math.random(),
-      comparison: '=',
-    },
-  ] as QueryFilter[],
+  selectedQueryType: QueryType
+  selectedIndex: number
+  selectedQueryFilters: QueryFilter[]
 
-  interrupted: false,
+  interrupted: boolean
 
-  fetchedChanges: [] as Change[],
-  fetchedQueryFilters: [] as QueryFilter[],
-  fetchedIndex: 0,
-  fetchedQueryType: null as QueryType,
-  fetchedCount: 0,
-  fetchedScannedCount: 0,
-  fetchedTimestamp: 0,
-  fetchedLastEvaluatedKey: null,
-  fetchedItems: [] as Item[],
-  fetchedItemsWithChanges: [] as Item[],
+  fetchedChanges: Change[]
+  fetchedQueryFilters: QueryFilter[]
+  fetchedIndex: number
+  fetchedQueryType: QueryType
+  fetchedCount: number
+  fetchedScannedCount: number
+  fetchedTimestamp: number
+  fetchedLastEvaluatedKey: any
+  fetchedItems: Item[]
+  fetchedItemsWithChanges: Item[]
 
-  itemsStringified: [] as any[],
+  itemsStringified: any[]
 
-  columns: [] as Column[],
-  hiddenColumns: [] as string[],
-  sortBy: {} as {
+  columns: Column[]
+  hiddenColumns: string[]
+  sortBy: {
     key?: string
     order?: string
-  },
+  }
 
-  selectedRows: [] as string[],
-  frozenData: [],
+  selectedRows: string[]
+  frozenData: any
 
   contextMenu: {
-    top: 0,
-    left: 0,
-    slsConsoleKey: null,
-  } as {
     top?: number
     left?: number
     slsConsoleKey: string
@@ -127,28 +118,97 @@ const initialState = {
     rowIndex?: any
     column?: any
     targetElement?: any
-  },
-  error: '',
-  changeHoverRows: [],
+  }
+  error: string
+  changeHoverRows: any[]
 
-  clipboard: {} as {
+  clipboard: {
     top?: number
     left?: number
     rowIndex?: number
     cellIndex?: number
-  },
+  }
 
-  tableName: '',
-  attributesSchema: {} as Record<string, string>,
-  hashKey: '',
-  sortKey: null as string,
+  tableName: string
+  attributesSchema: Record<string, string>
+  hashKey: string
+  sortKey: string
 }
-type State = typeof initialState
 
-const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+const isMac = navigator?.platform?.toUpperCase()?.indexOf('MAC') >= 0
 
 export class DynamoDb extends React.Component<any, State> {
-  state = initialState
+  state = {
+    license: getLicense(document.vscodeData.license),
+
+    isFooterExpanded: false,
+    isLoading: false,
+    reloadInProgress: false,
+
+    indexes: [] as Index[],
+
+    selectedQueryType: 'scan' as QueryType,
+    selectedIndex: 0,
+    selectedQueryFilters: [
+      {
+        id: Math.random(),
+        comparison: '=',
+      },
+    ] as QueryFilter[],
+
+    interrupted: false,
+
+    fetchedChanges: [] as Change[],
+    fetchedQueryFilters: [] as QueryFilter[],
+    fetchedIndex: 0,
+    fetchedQueryType: null as QueryType,
+    fetchedCount: 0,
+    fetchedScannedCount: 0,
+    fetchedTimestamp: 0,
+    fetchedLastEvaluatedKey: null,
+    fetchedItems: [] as Item[],
+    fetchedItemsWithChanges: [] as Item[],
+
+    itemsStringified: [] as any[],
+
+    columns: [] as Column[],
+    hiddenColumns: [] as string[],
+    sortBy: {} as {
+      key?: string
+      order?: string
+    },
+
+    selectedRows: [] as string[],
+    frozenData: [],
+
+    contextMenu: {
+      top: 0,
+      left: 0,
+      slsConsoleKey: null,
+    } as {
+      top?: number
+      left?: number
+      slsConsoleKey: string
+      rowData?: any
+      rowIndex?: any
+      column?: any
+      targetElement?: any
+    },
+    error: '',
+    changeHoverRows: [],
+
+    clipboard: {} as {
+      top?: number
+      left?: number
+      rowIndex?: number
+      cellIndex?: number
+    },
+
+    tableName: '',
+    attributesSchema: {} as Record<string, string>,
+    hashKey: '',
+    sortKey: null as string,
+  }
   contextMenuRef: React.RefObject<any>
 
   constructor(props) {
