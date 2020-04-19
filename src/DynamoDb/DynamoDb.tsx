@@ -620,7 +620,7 @@ export class DynamoDb extends React.Component<any, State> {
         ) : (
           <div>
             <span>Activating this feature requires a Pro license</span>
-            <Button className="secondary" onClick={() => buyLicense()}>
+            <Button onClick={() => buyLicense()}>
               Buy a License
             </Button>
             <Button className="secondary" onClick={() => enterLicense()}>
