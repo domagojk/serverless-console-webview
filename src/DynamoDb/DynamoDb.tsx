@@ -619,8 +619,10 @@ export class DynamoDb extends React.Component<any, State> {
           </div>
         ) : (
           <div>
-            <span>Your Serverless Console PRO license has expired</span>
-            <Button onClick={() => buyLicense()}>Renew</Button>
+            <span>Activating this feature requires a Pro license</span>
+            <Button className="secondary" onClick={() => buyLicense()}>
+              Buy a License
+            </Button>
             <Button className="secondary" onClick={() => enterLicense()}>
               Enter License Key
             </Button>
