@@ -67,6 +67,7 @@ export class SearchPage extends React.Component<
   {
     logGroupName: string
     region: string
+    awsProfile?: string
   },
   typeof initialState
 > {
@@ -109,7 +110,8 @@ export class SearchPage extends React.Component<
         endTime: Math.round(range[1] / 1000),
         logGroupName: this.props.logGroupName,
         region: this.props.region,
-        query: queryCommand
+        query: queryCommand,
+        awsProfile: this.props.awsProfile
       })
 
       this.setState({
@@ -157,6 +159,7 @@ export class SearchPage extends React.Component<
         queryId,
         ref: queryRef,
         region: this.props.region,
+        awsProfile: this.props.awsProfile
       })
 
       this.setState({
@@ -214,7 +217,9 @@ export class SearchPage extends React.Component<
       ) {
         try {
           await stopQuery({
-            queryId: this.state.queriesStatus[queryRef].queryId
+            queryId: this.state.queriesStatus[queryRef].queryId,
+            region: this.props.region,
+            awsProfile: this.props.awsProfile
           })
           this.setState({
             queriesStatus: {

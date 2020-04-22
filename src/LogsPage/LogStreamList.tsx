@@ -61,6 +61,7 @@ export class LogStreamList extends React.Component<Props> {
                         isExpanded={this.state.openedStreams.includes(logStream.arn)}
                         logGroup={this.props.tab.logs}
                         region={this.props.tab.region}
+                        awsProfile={this.props.tab.awsProfile}
                         logStream={logStream.logStreamName}
                         autoRefreshInterval={this.props.autoRefreshInterval}
                       />

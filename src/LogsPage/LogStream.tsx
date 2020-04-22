@@ -17,6 +17,7 @@ export class LogStream extends React.Component<{
   isExpanded?: boolean
   region?: string
   defaultSearch?: string
+  awsProfile?: string
 }> {
   state: {
     loaded: boolean
@@ -66,7 +67,8 @@ export class LogStream extends React.Component<{
       } = await getLogEvents({
         logGroup: this.props.logGroup,
         logStream: this.props.logStream,
-        region: this.props.region
+        region: this.props.region,
+        awsProfile: this.props.awsProfile
       })
 
       this.setState({
@@ -137,7 +139,8 @@ export class LogStream extends React.Component<{
         logGroup: this.props.logGroup,
         logStream: this.props.logStream,
         nextToken: this.state.nextForwardToken,
-        region: this.props.region
+        region: this.props.region,
+        awsProfile: this.props.awsProfile
       })
 
       this.setState({
@@ -188,7 +191,8 @@ export class LogStream extends React.Component<{
         logGroup: this.props.logGroup,
         logStream: this.props.logStream,
         nextToken: this.state.nextBackwardToken,
-        region: this.props.region
+        region: this.props.region,
+        awsProfile: this.props.awsProfile
       })
 
       this.setState({

@@ -39,14 +39,16 @@ export class TabWrapper extends React.Component<{
   async componentDidMount() {
     const { logStreams, nextToken, error } = await getLogStreams({
       logGroupName: this.props.tab.logs,
-      region: this.props.tab.region
+      region: this.props.tab.region,
+      awsProfile: this.props.tab.awsProfile
     })
 
     let overviewProps = {}
     if (this.props.tab.lambda) {
       const res = await getLambdaOverview({
         fnName: this.props.tab.lambda,
-        region: this.props.tab.region
+        region: this.props.tab.region,
+        awsProfile: this.props.tab.awsProfile
       })
       overviewProps = res.overviewProps
     }
@@ -87,7 +89,8 @@ export class TabWrapper extends React.Component<{
     const { logStreams, error, timestamp } = await getLogStreams({
       logGroupName: this.props.tab.logs,
       limit: 10,
-      region: this.props.tab.region
+      region: this.props.tab.region,
+      awsProfile: this.props.tab.awsProfile
     })
 
     const oldStreams = this.state.logStreams.filter(
@@ -111,7 +114,8 @@ export class TabWrapper extends React.Component<{
     const { logStreams, error, timestamp } = await getLogStreams({
       logGroupName: this.props.tab.logs,
       limit,
-      region: this.props.tab.region
+      region: this.props.tab.region,
+      awsProfile: this.props.tab.awsProfile
     })
 
     const oldStreams = this.state.logStreams.filter(
@@ -122,7 +126,8 @@ export class TabWrapper extends React.Component<{
     if (this.props.tab.lambda) {
       const res = await getLambdaOverview({
         fnName: this.props.tab.lambda,
-        region: this.props.tab.region
+        region: this.props.tab.region,
+        awsProfile: this.props.tab.awsProfile
       })
       overviewProps = res.overviewProps
     }
@@ -145,7 +150,8 @@ export class TabWrapper extends React.Component<{
     const { logStreams, nextToken, error } = await getLogStreams({
       logGroupName: this.props.tab.logs,
       region: this.props.tab.region,
-      nextToken: this.state.nextToken
+      nextToken: this.state.nextToken,
+      awsProfile: this.props.tab.awsProfile
     })
 
     const oldStreams = this.state.logStreams.filter(

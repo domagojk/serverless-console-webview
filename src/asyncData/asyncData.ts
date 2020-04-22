@@ -35,9 +35,11 @@ window.addEventListener('message', (event) => {
 export function getLambdaOverview({
   fnName,
   region,
+  awsProfile
 }: {
   fnName: string
   region?: string
+  awsProfile?: string
 }): Promise<{ overviewProps: any; error?: string }> {
   return new Promise((resolve) => {
     const messageId = Math.random()
@@ -47,6 +49,7 @@ export function getLambdaOverview({
       payload: {
         fnName,
         region,
+        awsProfile
       },
     })
 
@@ -70,11 +73,13 @@ export function getLogStreams({
   nextToken,
   limit,
   region,
+  awsProfile,
 }: {
   logGroupName: string
   nextToken?: string
   limit?: number
   region?: string
+  awsProfile?: string
 }): Promise<{
   logStreams: any[]
   error?: string
@@ -91,6 +96,7 @@ export function getLogStreams({
         limit,
         logGroupName,
         region,
+        awsProfile,
       },
     })
 
@@ -123,6 +129,7 @@ export function getLogEvents(params: {
   logGroup: string
   nextToken?: string
   region?: string
+  awsProfile?: string
 }): Promise<{
   logEvents: {
     ingestionTime: string
@@ -142,6 +149,7 @@ export function getLogEvents(params: {
         logGroup: params.logGroup,
         logStream: params.logStream,
         region: params.region,
+        awsProfile: params.awsProfile,
       },
     })
 
@@ -278,6 +286,7 @@ export function startQuery(payload: {
   query: string
   logGroupName: string
   region: string
+  awsProfile?: string
 }): Promise<{ queryId: string }> {
   return new Promise((resolve, reject) => {
     const messageId = Math.random()
@@ -297,7 +306,11 @@ export function startQuery(payload: {
   })
 }
 
-export function stopQuery(payload: { queryId: string }): Promise<unknown> {
+export function stopQuery(payload: {
+  queryId: string
+  region: string
+  awsProfile: string
+}): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const messageId = Math.random()
     vscode.postMessage({
@@ -319,6 +332,7 @@ export function stopQuery(payload: { queryId: string }): Promise<unknown> {
 export function getQueryResults(payload: {
   queryId: string
   region: string
+  awsProfile: string
   ref: string
 }): Promise<{
   status:
@@ -351,6 +365,7 @@ export function getQueryResults(payload: {
       if (message.error) {
         reject({
           status: 'Error',
+          message: message.error,
           results: [],
         })
       } else {
