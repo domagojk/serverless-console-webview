@@ -213,6 +213,7 @@ export async function dynamoDbFetchItems({
 
 export function editItem(payload: {
   content: any
+  originalContent: any,
   index: string
   queryType: string
   hashKey: string

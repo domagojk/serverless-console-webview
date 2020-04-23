@@ -672,11 +672,15 @@ export class DynamoDb extends React.Component<any, State> {
                     const item = this.state.fetchedItemsWithChanges.find(
                       (item) => item.id === slsConsoleKey
                     )
+                    const originalItem = this.state.fetchedItems.find(
+                      (item) => item.id === slsConsoleKey
+                    )
 
                     editItem({
                       queryType: this.state.fetchedQueryType,
                       index: this.state.indexes[this.state.fetchedIndex].id,
                       content: item.data,
+                      originalContent: originalItem.data,
                       columns: this.state.columns.map((c) => c.key),
                       hashKey: item.hashKey,
                       sortKey: item.sortKey,
@@ -1047,11 +1051,15 @@ export class DynamoDb extends React.Component<any, State> {
                         const item = this.state.fetchedItemsWithChanges.find(
                           (item) => item.id === rowData._slsConsoleKey
                         )
+                        const originalItem = this.state.fetchedItems.find(
+                          (item) => item.id === rowData._slsConsoleKey
+                        )
 
                         editItem({
                           queryType: this.state.fetchedQueryType,
                           index: this.state.indexes[this.state.fetchedIndex].id,
                           content: item.data,
+                          originalContent: originalItem.data,
                           selectColumn: column.dataKey,
                           columns: this.state.columns.map((c) => c.key),
                           hashKey: item.hashKey,
