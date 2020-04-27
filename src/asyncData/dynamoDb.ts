@@ -233,6 +233,7 @@ export function deleteItem(payload: {
   index: string
   hashKey: string
   sortKey: string
+  originalContent: any
 }) {
   vscode.postMessage({
     command: 'deleteItem',

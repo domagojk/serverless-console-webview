@@ -715,8 +715,13 @@ export class DynamoDb extends React.Component<any, State> {
                         (item) => item.id === slsConsoleKey
                       )
 
+                      const originalItem = this.state.fetchedItems.find(
+                        (item) => item.id === slsConsoleKey
+                      )
+
                       deleteItem({
                         queryType: this.state.fetchedQueryType,
+                        originalContent: originalItem.data,
                         index: item.index,
                         hashKey: item.hashKey,
                         sortKey: item.sortKey,
