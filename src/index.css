@@ -77,3 +77,22 @@ input.ant-input {
   color: var(--vscode-editor-foreground);
 }
 
+.logstream-option span {
+  font-size: 12px;
+}
+
+span.ant-checkbox-inner,
+.ant-checkbox-checked span.ant-checkbox-inner,
+.ant-checkbox-input:focus + .ant-checkbox-inner {
+  background-color: transparent;
+  border: 1px solid var(--vscode-checkbox-border);
+}
+.ant-checkbox-checked .ant-checkbox-inner:after {
+  margin-left: 0px;
+  margin-top: -1px;
+  border-color: var(--vscode-editor-foreground);
+}
+span.ant-checkbox-inner {
+  width: 14px;
+  height: 14px;
+}

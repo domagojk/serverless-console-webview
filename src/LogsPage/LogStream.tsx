@@ -10,18 +10,17 @@ const { Panel } = Collapse
 export class LogStream extends React.Component<{
   logStream: string
   logGroup: string
-  loadingNew?: boolean
-  loadingOld?: boolean
   autoRefreshInterval?: number
   isFirstLogStream?: boolean
   isExpanded?: boolean
   region?: string
-  defaultSearch?: string
   awsProfile?: string
+  search?: string
+  onSearchValChange?: any
+  hideSearchAndLoadMore?: boolean
 }> {
   state: {
     loaded: boolean
-    search: string
     groupPerRequest: boolean
     loadingNew?: boolean
     loadingOld?: boolean
@@ -47,10 +46,12 @@ export class LogStream extends React.Component<{
   _intervalRef: NodeJS.Timeout
 
   constructor(params) {
-    super(params)
+    super({
+      ...params,
+      search: params.search || ''
+    })
 
     this.state = {
-      search: params.defaultSearch,
       groupPerRequest: document.vscodeData.groupPerRequest,
       loaded: false,
       preparedMessages: [],
@@ -88,7 +89,7 @@ export class LogStream extends React.Component<{
             messageLong: log.message
           })),
           this.state.groupPerRequest,
-          this.state.search
+          this.props.search
         )
       })
     } catch (error) {
@@ -128,6 +129,16 @@ export class LogStream extends React.Component<{
     ) {
       this.initInterval()
     }
+
+    if (prevProps.search !== this.props.search) {
+      this.setState({
+        preparedMessages: prepareMessagesArr(
+          this.state.messages,
+          this.state.groupPerRequest,
+          this.props.search
+        )
+      })
+    }
   }
 
   async onRetryNew() {
@@ -164,7 +175,7 @@ export class LogStream extends React.Component<{
             }))
           ],
           this.state.groupPerRequest,
-          this.state.search
+          this.props.search
         ),
         nextForwardToken
       })
@@ -216,7 +227,7 @@ export class LogStream extends React.Component<{
             ...this.state.messages
           ],
           this.state.groupPerRequest,
-          this.state.search
+          this.props.search
         ),
         nextBackwardToken
       })
@@ -237,19 +248,14 @@ export class LogStream extends React.Component<{
   render() {
     return this.state.loaded ? (
       [
-        <div className="logstream-options" key="options">
+        this.props.hideSearchAndLoadMore !== true && <div className="logstream-options" key="options">
           <Input.Search
             onChange={e => {
-              this.setState({
-                search: e.target.value,
-                preparedMessages: prepareMessagesArr(
-                  this.state.messages,
-                  this.state.groupPerRequest,
-                  e.target.value
-                )
-              })
+              if (this.props.onSearchValChange) {
+                this.props.onSearchValChange(e.target.value)
+              }
             }}
-            value={this.state.search}
+            value={this.props.search}
             placeholder="search"
             allowClear={true}
             size="small"
@@ -262,7 +268,7 @@ export class LogStream extends React.Component<{
                 preparedMessages: prepareMessagesArr(
                   this.state.messages,
                   e.target.checked,
-                  this.state.search
+                  this.props.search
                 )
               })
             }}
@@ -270,7 +276,7 @@ export class LogStream extends React.Component<{
             Group per request
           </Checkbox>
         </div>,
-        <div className="retry-message retry-message-old" key="retryold">
+        this.props.hideSearchAndLoadMore !== true && <div className="retry-message retry-message-old" key="retryold">
           {this.state.loadingOld ? (
             'loading older events...'
           ) : (
@@ -317,7 +323,7 @@ export class LogStream extends React.Component<{
                 }
               >
                 {message.messagesLong.map((m: string, i: number) => (
-                  <LogEvent key={i} message={m} search={this.state.search} />
+                  <LogEvent key={i} message={m} search={this.props.search} />
                 ))}
               </Panel>
             )
@@ -326,7 +332,7 @@ export class LogStream extends React.Component<{
         this.state.error ? (
           <div className="error">{this.state.error}</div>
         ) : null,
-        <div className="retry-message retry-message-new" key="retrynew">
+        this.props.hideSearchAndLoadMore !== true && <div className="retry-message retry-message-new" key="retrynew">
           {this.state.loadingNew ? (
             'loading new events...'
           ) : (

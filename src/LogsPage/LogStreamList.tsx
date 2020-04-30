@@ -20,7 +20,8 @@ type Props = {
 
 export class LogStreamList extends React.Component<Props> {
   state = {
-    openedStreams: []
+    openedStreams: [],
+    searchString: ''
   }
 
   render() {
@@ -63,6 +64,12 @@ export class LogStreamList extends React.Component<Props> {
                         region={this.props.tab.region}
                         awsProfile={this.props.tab.awsProfile}
                         logStream={logStream.logStreamName}
+                        search={this.state.searchString}
+                        onSearchValChange={search => {
+                          this.setState({
+                            searchString: search
+                          })
+                        }}
                         autoRefreshInterval={this.props.autoRefreshInterval}
                       />
                     </Panel>

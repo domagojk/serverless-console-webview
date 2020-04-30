@@ -1,19 +1,28 @@
 import React from 'react'
-import { Input, DatePicker, Collapse, Button, Table, Icon, Tooltip } from 'antd'
+import {
+  Input,
+  DatePicker,
+  Collapse,
+  Button,
+  Table,
+  Icon,
+  Tooltip,
+  Checkbox,
+} from 'antd'
 import './searchPage.css'
 import moment from 'moment'
 import { startQuery, stopQuery, getQueryResults } from '../asyncData/asyncData'
 import { RelativeTime } from './RelativeTime'
 import { LogEvent } from './LogEvent'
-import { prepareMessagesArr } from './LogStream'
+import { prepareMessagesArr, LogStream } from './LogStream'
 import { formatBytes } from '../util/formatBytes'
 
 const { Search, TextArea } = Input
 const { Panel } = Collapse
 
-const defaultQuery = `fields @timestamp, @message
+const defaultQuery = `fields @timestamp, @message, @logStream
   | filter @message like /(?i)$SEARCH_INPUT/
-  | sort @timestamp asc
+  | sort @timestamp desc
   | limit 20`
 
 const { RangePicker } = DatePicker
@@ -62,6 +71,7 @@ const initialState = {
   activeQueryRef: '',
   queriesStatus: {} as Record<string, QueryData>,
   useRegex: false,
+  searchByLogStreams: false,
 }
 
 export class SearchPage extends React.Component<
@@ -293,6 +303,24 @@ export class SearchPage extends React.Component<
     return (
       <div className="search-page">
         <h2>Search</h2>
+        <div className="logstream-option">
+          <Checkbox
+            checked={this.state.searchByLogStreams}
+            onChange={(e) => {
+              this.setState({
+                searchByLogStreams: e.target.checked,
+              })
+            }}
+          >
+            Show results per log stream{' '}
+            <Tooltip
+              title={`For each found @logStream, adidtional "getLogEvents" query will be executed.`}
+              placement="top"
+            >
+              <Icon type="question-circle" />
+            </Tooltip>
+          </Checkbox>
+        </div>
         <Search
           value={this.state.searchStr}
           onSearch={() => {
@@ -533,54 +561,81 @@ export class SearchPage extends React.Component<
         <FetchingStatus activeQuery={activeQuery} />
 
         {activeQuery.error && <div>{activeQuery.error}</div>}
+
         {
           activeQuery.resultsWithMatches &&
           activeQuery.resultsWithMatches.length ? (
             <div className="results">
-              <Collapse key="collapse" bordered={false}>
-                {activeQuery.resultsWithMatches.map((message) => {
-                  return (
-                    <Panel
-                      key={this.state.activeQueryRef + message.key}
-                      className={
-                        message.searchMatches === 0 ? 'blurforsearch' : ''
-                      }
-                      header={
-                        <div className="logevent-header">
-                          <RelativeTime
-                            className="relative-time"
-                            time={message.timestamp}
+              {this.state.searchByLogStreams ? (
+                <div>
+                  {activeQuery.resultsWithoutMatches
+                    .filter((res, index, self) => {
+                      // unique array
+                      return (
+                        res.logStream &&
+                        self.map((v) => v.logStream).indexOf(res.logStream) ===
+                          index
+                      )
+                    })
+                    .map((res) => (
+                      <LogStream
+                        isFirstLogStream={false}
+                        isExpanded={false}
+                        search={this.state.searchStr}
+                        hideSearchAndLoadMore={true}
+                        logGroup={this.props.logGroupName}
+                        region={this.props.region}
+                        awsProfile={this.props.awsProfile}
+                        logStream={res.logStream}
+                      />
+                    ))}
+                </div>
+              ) : (
+                <Collapse key="collapse" bordered={false}>
+                  {activeQuery.resultsWithMatches.map((message) => {
+                    return (
+                      <Panel
+                        key={this.state.activeQueryRef + message.key}
+                        className={
+                          message.searchMatches === 0 ? 'blurforsearch' : ''
+                        }
+                        header={
+                          <div className="logevent-header">
+                            <RelativeTime
+                              className="relative-time"
+                              time={message.timestamp}
+                            />
+                            <span className="abs-time">
+                              {moment(message.timestamp).format('lll')}
+                            </span>
+                            <span className="logevent-shortmessage">
+                              {message.searchMatches > 0 && (
+                                <span className="event-tag matches">
+                                  matches: {message.searchMatches}
+                                </span>
+                              )}
+                              {message.shortMessageMatched &&
+                              message.shortMessageMatched.length
+                                ? message.shortMessageMatched.map((tag) => (
+                                    <span className="event-tag">{tag}</span>
+                                  ))
+                                : message.messageShort}
+                            </span>
+                          </div>
+                        }
+                      >
+                        {message.messagesLong.map((m: string, i: number) => (
+                          <LogEvent
+                            key={i}
+                            message={m}
+                            search={this.state.searchStr}
                           />
-                          <span className="abs-time">
-                            {moment(message.timestamp).format('lll')}
-                          </span>
-                          <span className="logevent-shortmessage">
-                            {message.searchMatches > 0 && (
-                              <span className="event-tag matches">
-                                matches: {message.searchMatches}
-                              </span>
-                            )}
-                            {message.shortMessageMatched &&
-                            message.shortMessageMatched.length
-                              ? message.shortMessageMatched.map((tag) => (
-                                  <span className="event-tag">{tag}</span>
-                                ))
-                              : message.messageShort}
-                          </span>
-                        </div>
-                      }
-                    >
-                      {message.messagesLong.map((m: string, i: number) => (
-                        <LogEvent
-                          key={i}
-                          message={m}
-                          search={this.state.searchStr}
-                        />
-                      ))}
-                    </Panel>
-                  )
-                })}
-              </Collapse>
+                        ))}
+                      </Panel>
+                    )
+                  })}
+                </Collapse>
+              )}
             </div>
           ) : null // No data found for this time range
         }

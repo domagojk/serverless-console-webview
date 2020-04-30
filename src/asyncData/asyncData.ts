@@ -386,6 +386,7 @@ export function getQueryResults(payload: {
                   moment(log['@timestamp']).toDate().getTime() - utcOffsetInMs,
                 messageShort: log['@message'].slice(0, 500),
                 messageLong: log['@message'],
+                logStream: log['@logStream']
               }
             }),
         })
