@@ -1,5 +1,5 @@
 import React from 'react'
-import { Input, DatePicker, Collapse, Button, Table, Icon } from 'antd'
+import { Input, DatePicker, Collapse, Button, Table, Icon, Tooltip } from 'antd'
 import './searchPage.css'
 import moment from 'moment'
 import { startQuery, stopQuery, getQueryResults } from '../asyncData/asyncData'
@@ -49,7 +49,7 @@ const inMs = {
   '2d': 172800000,
   '3d': 259200000,
   '7d': 604800000,
-  '30d': 2592000000
+  '30d': 2592000000,
 }
 
 const initialState = {
@@ -60,7 +60,8 @@ const initialState = {
   isQueryShown: false,
   isHistoryShown: false,
   activeQueryRef: '',
-  queriesStatus: {} as Record<string, QueryData>
+  queriesStatus: {} as Record<string, QueryData>,
+  useRegex: false,
 }
 
 export class SearchPage extends React.Component<
@@ -80,10 +81,15 @@ export class SearchPage extends React.Component<
         : relativeRange(this.state.activeTimeFrame)
 
     const queryRef = existingQueryRef || Date.now().toString()
-    const queryCommand = this.state.query.replace(
-      /\$SEARCH_INPUT/g,
-      this.state.searchStr
-    )
+
+    const searchStr = this.state.useRegex
+      ? this.state.searchStr
+      : this.state.searchStr
+          .replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
+          .replace(/-/g, '\\x2d')
+          .replace(/\//g, '\\/')
+
+    const queryCommand = this.state.query.replace(/\$SEARCH_INPUT/g, searchStr)
 
     this.setState({
       activeQueryRef: queryRef,
@@ -98,9 +104,9 @@ export class SearchPage extends React.Component<
           isRunning: true,
           status: 'Started',
           resultsWithoutMatches: [],
-          resultsWithMatches: []
-        }
-      }
+          resultsWithMatches: [],
+        },
+      },
     })
 
     try {
@@ -111,7 +117,7 @@ export class SearchPage extends React.Component<
         logGroupName: this.props.logGroupName,
         region: this.props.region,
         query: queryCommand,
-        awsProfile: this.props.awsProfile
+        awsProfile: this.props.awsProfile,
       })
 
       this.setState({
@@ -119,9 +125,9 @@ export class SearchPage extends React.Component<
           ...this.state.queriesStatus,
           [queryRef]: {
             ...this.state.queriesStatus[queryRef],
-            queryId
-          }
-        }
+            queryId,
+          },
+        },
       })
 
       this.getQueryResults(queryRef)
@@ -134,9 +140,9 @@ export class SearchPage extends React.Component<
             ...this.state.queriesStatus[queryRef],
             isRunning: false,
             status: 'Error',
-            error
-          }
-        }
+            error,
+          },
+        },
       })
     }
   }
@@ -147,9 +153,9 @@ export class SearchPage extends React.Component<
         ...this.state.queriesStatus,
         [queryRef]: {
           ...this.state.queriesStatus[queryRef],
-          isRunning: true
-        }
-      }
+          isRunning: true,
+        },
+      },
     })
 
     const queryId = this.state.queriesStatus[queryRef].queryId
@@ -159,7 +165,7 @@ export class SearchPage extends React.Component<
         queryId,
         ref: queryRef,
         region: this.props.region,
-        awsProfile: this.props.awsProfile
+        awsProfile: this.props.awsProfile,
       })
 
       this.setState({
@@ -199,7 +205,7 @@ export class SearchPage extends React.Component<
             isRunning: false,
             status: 'Failed',
             resultsWithoutMatches: [],
-            resultsWithMatches: []
+            resultsWithMatches: [],
           },
         },
       })
@@ -219,7 +225,7 @@ export class SearchPage extends React.Component<
           await stopQuery({
             queryId: this.state.queriesStatus[queryRef].queryId,
             region: this.props.region,
-            awsProfile: this.props.awsProfile
+            awsProfile: this.props.awsProfile,
           })
           this.setState({
             queriesStatus: {
@@ -227,9 +233,9 @@ export class SearchPage extends React.Component<
               [queryRef]: {
                 ...this.state.queriesStatus[queryRef],
                 isRunning: false,
-                status: 'Stop'
-              }
-            }
+                status: 'Stop',
+              },
+            },
           })
         } catch (err) {
           // ignored stop error
@@ -244,7 +250,7 @@ export class SearchPage extends React.Component<
       this.state.queriesStatus[this.state.activeQueryRef] || ({} as QueryData)
 
     this.setState({
-      searchStr: e.target.value
+      searchStr: e.target.value,
     })
 
     if (
@@ -260,16 +266,16 @@ export class SearchPage extends React.Component<
               activeQuery.resultsWithoutMatches,
               true,
               e.target.value
-            )
-          }
-        }
+            ),
+          },
+        },
       })
     }
   }
 
-  onTimeFrameChange = timeframe => {
+  onTimeFrameChange = (timeframe) => {
     this.setState({
-      activeTimeFrame: timeframe
+      activeTimeFrame: timeframe,
     })
   }
 
@@ -303,10 +309,39 @@ export class SearchPage extends React.Component<
           enterButton={isTheSameQuery ? 'Refresh' : 'Search'}
           addonAfter={
             activeQuery.isRunning ? (
-              <Button type="danger" onClick={this.stopQuery.bind(this)}>
-                Stop
-              </Button>
-            ) : null
+              <span>
+                <Button type="danger" onClick={this.stopQuery.bind(this)}>
+                  Stop
+                </Button>
+                <Tooltip title="Use Regular Expression" placement="top">
+                  <span
+                    style={{ right: 110 }}
+                    onClick={() => {
+                      this.setState({
+                        useRegex: !this.state.useRegex,
+                      })
+                    }}
+                    className={`regex-icon ${
+                      this.state.useRegex ? 'active' : ''
+                    }`}
+                  ></span>
+                </Tooltip>
+              </span>
+            ) : (
+              <Tooltip title="Use Regular Expression" placement="top">
+                <span
+                  style={{ right: 80 }}
+                  onClick={() => {
+                    this.setState({
+                      useRegex: !this.state.useRegex,
+                    })
+                  }}
+                  className={`regex-icon ${
+                    this.state.useRegex ? 'active' : ''
+                  }`}
+                ></span>
+              </Tooltip>
+            )
           }
         />
 
@@ -380,7 +415,7 @@ export class SearchPage extends React.Component<
               onClick={() =>
                 this.setState({
                   isQueryShown: !this.state.isQueryShown,
-                  isHistoryShown: false
+                  isHistoryShown: false,
                 })
               }
             >
@@ -398,12 +433,12 @@ export class SearchPage extends React.Component<
                     onClick={() =>
                       this.setState({
                         isHistoryShown: !this.state.isHistoryShown,
-                        isQueryShown: false
+                        isQueryShown: false,
                       })
                     }
                   >
                     history ({Object.keys(this.state.queriesStatus).length})
-                  </span>
+                  </span>,
                 ]
               : null}
           </div>
@@ -417,22 +452,22 @@ export class SearchPage extends React.Component<
             placeholder={['Start Time', 'End Time']}
             value={[
               moment(this.state.customRange[0]),
-              moment(this.state.customRange[1])
+              moment(this.state.customRange[1]),
             ]}
             ranges={{
               'This Week': [moment().startOf('week'), moment().endOf('week')],
               'This Month': [
                 moment().startOf('month'),
-                moment().endOf('month')
+                moment().endOf('month'),
               ],
-              'This Year': [moment().startOf('year'), moment().endOf('year')]
+              'This Year': [moment().startOf('year'), moment().endOf('year')],
             }}
-            onChange={val => {
+            onChange={(val) => {
               this.setState({
                 customRange: [
                   parseInt(val[0].format('x')),
-                  parseInt(val[1].format('x'))
-                ]
+                  parseInt(val[1].format('x')),
+                ],
               })
             }}
           />
@@ -443,7 +478,7 @@ export class SearchPage extends React.Component<
             <TextArea
               value={this.state.query}
               rows={4}
-              onChange={e => this.setState({ query: e.target.value })}
+              onChange={(e) => this.setState({ query: e.target.value })}
             />
             <div className="links">
               {this.state.query !== defaultQuery && [
@@ -453,7 +488,7 @@ export class SearchPage extends React.Component<
                 >
                   reset
                 </span>,
-                <span className="separator">|</span>
+                <span className="separator">|</span>,
               ]}
               <a
                 href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html"
@@ -471,7 +506,7 @@ export class SearchPage extends React.Component<
           <SearchHistory
             queriesStatus={this.state.queriesStatus}
             active={this.state.activeQueryRef}
-            onRowClick={queryRef => {
+            onRowClick={(queryRef) => {
               const choosenQuery = this.state.queriesStatus[queryRef]
               this.setState({
                 activeQueryRef: queryRef,
@@ -487,9 +522,9 @@ export class SearchPage extends React.Component<
                       choosenQuery.resultsWithoutMatches,
                       true,
                       choosenQuery.searchStr
-                    )
-                  }
-                }
+                    ),
+                  },
+                },
               })
             }}
           />
@@ -497,59 +532,57 @@ export class SearchPage extends React.Component<
 
         <FetchingStatus activeQuery={activeQuery} />
 
+        {activeQuery.error && <div>{activeQuery.error}</div>}
         {
-          activeQuery.error && (
-            <div>{activeQuery.error}</div>
-          )}
-          {activeQuery.resultsWithMatches &&
-            activeQuery.resultsWithMatches.length ? (
-          <div className="results">
-            <Collapse key="collapse" bordered={false}>
-              {activeQuery.resultsWithMatches.map(message => {
-                return (
-                  <Panel
-                    key={this.state.activeQueryRef + message.key}
-                    className={
-                      message.searchMatches === 0 ? 'blurforsearch' : ''
-                    }
-                    header={
-                      <div className="logevent-header">
-                        <RelativeTime
-                          className="relative-time"
-                          time={message.timestamp}
+          activeQuery.resultsWithMatches &&
+          activeQuery.resultsWithMatches.length ? (
+            <div className="results">
+              <Collapse key="collapse" bordered={false}>
+                {activeQuery.resultsWithMatches.map((message) => {
+                  return (
+                    <Panel
+                      key={this.state.activeQueryRef + message.key}
+                      className={
+                        message.searchMatches === 0 ? 'blurforsearch' : ''
+                      }
+                      header={
+                        <div className="logevent-header">
+                          <RelativeTime
+                            className="relative-time"
+                            time={message.timestamp}
+                          />
+                          <span className="abs-time">
+                            {moment(message.timestamp).format('lll')}
+                          </span>
+                          <span className="logevent-shortmessage">
+                            {message.searchMatches > 0 && (
+                              <span className="event-tag matches">
+                                matches: {message.searchMatches}
+                              </span>
+                            )}
+                            {message.shortMessageMatched &&
+                            message.shortMessageMatched.length
+                              ? message.shortMessageMatched.map((tag) => (
+                                  <span className="event-tag">{tag}</span>
+                                ))
+                              : message.messageShort}
+                          </span>
+                        </div>
+                      }
+                    >
+                      {message.messagesLong.map((m: string, i: number) => (
+                        <LogEvent
+                          key={i}
+                          message={m}
+                          search={this.state.searchStr}
                         />
-                        <span className="abs-time">
-                          {moment(message.timestamp).format('lll')}
-                        </span>
-                        <span className="logevent-shortmessage">
-                          {message.searchMatches > 0 && (
-                            <span className="event-tag matches">
-                              matches: {message.searchMatches}
-                            </span>
-                          )}
-                          {message.shortMessageMatched &&
-                          message.shortMessageMatched.length
-                            ? message.shortMessageMatched.map(tag => (
-                                <span className="event-tag">{tag}</span>
-                              ))
-                            : message.messageShort}
-                        </span>
-                      </div>
-                    }
-                  >
-                    {message.messagesLong.map((m: string, i: number) => (
-                      <LogEvent
-                        key={i}
-                        message={m}
-                        search={this.state.searchStr}
-                      />
-                    ))}
-                  </Panel>
-                )
-              })}
-            </Collapse>
-          </div>
-        ) : null // No data found for this time range
+                      ))}
+                    </Panel>
+                  )
+                })}
+              </Collapse>
+            </div>
+          ) : null // No data found for this time range
         }
       </div>
     )
@@ -578,47 +611,47 @@ function SearchHistory({ queriesStatus, onRowClick, active }) {
       dataIndex: 'searchStr',
       key: 'searchStr',
       width: '34%',
-      render: searchStr => (
+      render: (searchStr) => (
         <span className="search-str">
           <Icon type="right" />
           {searchStr}
         </span>
-      )
+      ),
     },
     {
       title: 'Timeframe',
       dataIndex: 'timeframe',
       key: 'timeframe',
-      render: timeframe => <span>Timeframe: {timeframe}</span>,
-      width: '22%'
+      render: (timeframe) => <span>Timeframe: {timeframe}</span>,
+      width: '22%',
     },
     {
       title: 'Results',
       dataIndex: 'results',
       key: 'results',
       align: 'right' as any,
-      render: results => <span>Results: {results}</span>,
-      width: '22%'
+      render: (results) => <span>Results: {results}</span>,
+      width: '22%',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       align: 'right' as any,
       key: 'status',
-      width: '22%'
-    }
+      width: '22%',
+    },
   ]
 
   const data = Object.keys(queriesStatus)
     .reverse()
-    .map(queryRef => {
+    .map((queryRef) => {
       return {
         key: queryRef,
         searchStr: queriesStatus[queryRef].searchStr,
         results: queriesStatus[queryRef].resultsWithMatches.length,
         status: queriesStatus[queryRef].status,
         timeframe: queriesStatus[queryRef].activeTimeFrame,
-        ellipsis: true
+        ellipsis: true,
       }
     })
   return (
@@ -630,12 +663,12 @@ function SearchHistory({ queriesStatus, onRowClick, active }) {
       showHeader={false}
       scroll={{
         y: 150,
-        x: false
+        x: false,
       }}
-      onRowClick={row => {
+      onRowClick={(row) => {
         onRowClick(row.key)
       }}
-      rowClassName={row => (row.key === active ? 'active' : '')}
+      rowClassName={(row) => (row.key === active ? 'active' : '')}
     />
   )
 }
