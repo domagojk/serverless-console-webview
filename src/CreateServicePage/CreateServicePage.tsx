@@ -19,12 +19,9 @@ export function CreateServicePage() {
 
           <div
             onClick={() => setService('dynamodb')}
-            className={`button-box pro ${
-              service === 'dynamodb' ? 'active' : ''
-            }`}
+            className={`button-box ${service === 'dynamodb' ? 'active' : ''}`}
           >
             <span>DynamoDB</span>
-            <span className="sticker">PRO</span>
           </div>
         </div>
       }

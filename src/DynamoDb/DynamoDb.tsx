@@ -26,7 +26,6 @@ import { getDomOffset } from './getDomOffset'
 import { sortFunction } from './sortFunction'
 import { stringifyItems } from './stringifyItems'
 import { getLicense, License } from '../getLicense'
-import { buyLicense, enterLicense } from '../asyncData/asyncData'
 
 type QueryType = 'scan' | 'query'
 
@@ -254,26 +253,6 @@ export class DynamoDb extends React.Component<any, State> {
         })
       }
     })
-
-    if (this.state.license?.deviceId && this.state.license?.invalid !== true) {
-      // check only if it's valid
-      // setState only if it is not valid
-      // ignore if request fails
-      fetch(
-        `https://api.serverlessconsole.com/checkLicenseWebview?deviceId=${this.state.license?.deviceId}&licenseKey=${this.state.license?.licenseKey}&mac=${isMac}`
-      )
-        .then((response) => {
-          return response.json()
-        })
-        .then((data) => {
-          if (data?.invalid) {
-            this.setState({
-              license: getLicense(data),
-            })
-          }
-        })
-        .catch(() => {})
-    }
   }
 
   componentDidUpdate(prevProps, prevState: State) {
@@ -607,27 +586,7 @@ export class DynamoDb extends React.Component<any, State> {
   render() {
     const selectedS = this.state.selectedRows.length > 1 ? 's' : ''
 
-    return this.state.license?.invalid ? (
-      <div className="license-invalid">
-        {this.state.license.inTrial ? (
-          <div>
-            <span>Your Serverless Console PRO trial period has expired</span>
-            <Button onClick={() => buyLicense()}>Buy Now</Button>
-            <Button className="secondary" onClick={() => enterLicense()}>
-              Enter License Key
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <span>Activating this feature requires a Pro license</span>
-            <Button onClick={() => buyLicense()}>Buy a License</Button>
-            <Button className="secondary" onClick={() => enterLicense()}>
-              Enter License Key
-            </Button>
-          </div>
-        )}
-      </div>
-    ) : (
+    return (
       <div className="dynamodb-page">
         <div className="main-wrapper">
           {this.state.clipboard?.top && (
