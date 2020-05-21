@@ -1,5 +1,6 @@
-- fetch per 20 results, max 5 streams at a time
+- fetch per 20ish results, max 5 streams at a time
 - all results are sorted in a table by timestamp (order which it comes is not important since multiple streams can result diff results)
 - load older (on bottom) fetches "next 5 streams", if there is none, listStreams with token
 - load newer (on top) lists new streams and new logevents
 - active streams are defined by last logs in a stream (if in last 10 minutes)
+- use react window (virtualized) list
