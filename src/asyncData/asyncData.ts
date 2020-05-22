@@ -35,7 +35,7 @@ window.addEventListener('message', (event) => {
 export function getLambdaOverview({
   fnName,
   region,
-  awsProfile
+  awsProfile,
 }: {
   fnName: string
   region?: string
@@ -49,7 +49,7 @@ export function getLambdaOverview({
       payload: {
         fnName,
         region,
-        awsProfile
+        awsProfile,
       },
     })
 
@@ -386,7 +386,7 @@ export function getQueryResults(payload: {
                   moment(log['@timestamp']).toDate().getTime() - utcOffsetInMs,
                 messageShort: log['@message'].slice(0, 500),
                 messageLong: log['@message'],
-                logStream: log['@logStream']
+                logStream: log['@logStream'],
               }
             }),
         })
@@ -425,5 +425,12 @@ export function enterLicense() {
   vscode.postMessage({
     command: 'enterLicense',
     payload: {},
+  })
+}
+
+export function viewstateChanged(params: { page: string; tab: string }) {
+  vscode.postMessage({
+    command: 'viewstateChanged',
+    payload: params,
   })
 }

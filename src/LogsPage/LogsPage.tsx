@@ -3,17 +3,20 @@ import React, { useState } from 'react'
 import { Tabs, Icon, Tooltip } from 'antd'
 import { TabWrapper } from './TabWrapper'
 import { SearchPage } from './SearchPage'
+import { viewstateChanged } from '../asyncData/asyncData'
 
 const { TabPane } = Tabs
 
 export function LogsPage() {
   const [mounted, addToMounted] = useState([
-    document.vscodeData.tabs[0].page || 'logs'
+    document.vscodeData.viewState?.page || 'logs',
   ])
   const [activePage, setActivePage] = useState(
-    document.vscodeData.tabs[0].page || 'logs'
+    document.vscodeData.viewState?.page || 'logs'
   )
-  const [activeTab, setActiveTab] = useState(document.vscodeData.tabs[0].title)
+  const [activeTab, setActiveTab] = useState(
+    document.vscodeData.viewState?.tab || document.vscodeData.tabs[0].title
+  )
   const [refreshVal, setRefreshVal] = useState(
     document.vscodeData.autoRefreshInterval
   )
@@ -27,6 +30,10 @@ export function LogsPage() {
           }
           onClick={() => {
             setActivePage('logs')
+            viewstateChanged({
+              page: 'logs',
+              tab: activeTab,
+            })
             addToMounted(
               mounted.includes('logs') ? mounted : [...mounted, 'logs']
             )
@@ -47,6 +54,10 @@ export function LogsPage() {
           }
           onClick={() => {
             setActivePage('search')
+            viewstateChanged({
+              page: 'search',
+              tab: activeTab,
+            })
             addToMounted(
               mounted.includes('search') ? mounted : [...mounted, 'search']
             )
@@ -64,9 +75,14 @@ export function LogsPage() {
       </div>
       <div className="main-wrapper">
         <Tabs
+          activeKey={activeTab}
           animated={false}
-          onChange={key => {
+          onChange={(key) => {
             setActiveTab(key)
+            viewstateChanged({
+              page: activePage,
+              tab: key,
+            })
           }}
         >
           {document.vscodeData.tabs.map((tab: any) => (
@@ -74,24 +90,28 @@ export function LogsPage() {
               {mounted.includes('search') && (
                 <div
                   style={{
-                    display: activePage === 'search' ? 'block' : 'none'
+                    display: activePage === 'search' ? 'block' : 'none',
                   }}
                 >
-                  <SearchPage logGroupName={tab.logs} region={tab.region} awsProfile={tab.awsProfile} />
+                  <SearchPage
+                    logGroupName={tab.logs}
+                    region={tab.region}
+                    awsProfile={tab.awsProfile}
+                  />
                 </div>
               )}
 
               {mounted.includes('logs') && (
                 <div
                   style={{
-                    display: activePage === 'logs' ? 'block' : 'none'
+                    display: activePage === 'logs' ? 'block' : 'none',
                   }}
                 >
                   <TabWrapper
                     tab={tab}
                     isActive={activePage === 'logs' && activeTab === tab.title}
                     autoRefreshInterval={refreshVal}
-                    onAutoRefreshChange={autoRefreshInterval => {
+                    onAutoRefreshChange={(autoRefreshInterval) => {
                       document.vscodeData.autoRefreshInterval = autoRefreshInterval
                       setRefreshVal(autoRefreshInterval)
                     }}
