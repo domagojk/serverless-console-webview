@@ -11,7 +11,12 @@ import {
 } from 'antd'
 import './searchPage.css'
 import moment from 'moment'
-import { startQuery, stopQuery, getQueryResults } from '../asyncData/asyncData'
+import {
+  startQuery,
+  stopQuery,
+  getQueryResults,
+  settingsChanged,
+} from '../asyncData/asyncData'
 import { RelativeTime } from './RelativeTime'
 import { LogEvent } from './LogEvent'
 import { prepareMessagesArr, LogStream } from './LogStream'
@@ -71,7 +76,8 @@ const initialState = {
   activeQueryRef: '',
   queriesStatus: {} as Record<string, QueryData>,
   useRegex: false,
-  searchByLogStreams: false,
+  searchByLogStreams:
+    document.vscodeData?.settings?.searchByLogStreams || false,
 }
 
 export class SearchPage extends React.Component<
@@ -310,6 +316,7 @@ export class SearchPage extends React.Component<
               this.setState({
                 searchByLogStreams: e.target.checked,
               })
+              settingsChanged({ searchByLogStreams: e.target.checked })
             }}
           >
             Show results per log stream{' '}

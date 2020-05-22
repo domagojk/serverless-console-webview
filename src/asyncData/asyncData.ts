@@ -434,3 +434,10 @@ export function viewstateChanged(params: { page: string; tab: string }) {
     payload: params,
   })
 }
+
+export function settingsChanged(params: Record<string, any>) {
+  vscode.postMessage({
+    command: 'settingsChanged',
+    payload: params,
+  })
+}
