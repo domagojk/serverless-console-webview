@@ -89,7 +89,7 @@ export class LogStreamList extends React.Component<Props> {
             )}
           </div>
         ) : (
-          <div>loading</div>
+          <div>loading...</div>
         )}
       </div>
     )
