@@ -21,7 +21,7 @@ type Props = {
 export class LogStreamList extends React.Component<Props> {
   state = {
     openedStreams: [],
-    searchString: ''
+    searchString: '',
   }
 
   render() {
@@ -35,7 +35,7 @@ export class LogStreamList extends React.Component<Props> {
           <div>
             <Collapse
               className="logstreamslist"
-              onChange={openedStreams => this.setState({ openedStreams })}
+              onChange={(openedStreams) => this.setState({ openedStreams })}
             >
               {this.props.error ? (
                 <div className="foreground-color">{this.props.error}</div>
@@ -59,15 +59,17 @@ export class LogStreamList extends React.Component<Props> {
                     >
                       <LogStream
                         isFirstLogStream={index === 0}
-                        isExpanded={this.state.openedStreams.includes(logStream.arn)}
+                        isExpanded={this.state.openedStreams.includes(
+                          logStream.arn
+                        )}
                         logGroup={this.props.tab.logs}
                         region={this.props.tab.region}
                         awsProfile={this.props.tab.awsProfile}
                         logStream={logStream.logStreamName}
                         search={this.state.searchString}
-                        onSearchValChange={search => {
+                        onSearchValChange={(search) => {
                           this.setState({
-                            searchString: search
+                            searchString: search,
                           })
                         }}
                         autoRefreshInterval={this.props.autoRefreshInterval}

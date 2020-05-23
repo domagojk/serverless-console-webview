@@ -7,7 +7,7 @@ import {
   getLogStreams,
   LogStreamData,
   getLambdaOverview,
-  setAutoRefresh
+  setAutoRefresh,
 } from '../asyncData/asyncData'
 
 export class TabWrapper extends React.Component<{
@@ -31,8 +31,8 @@ export class TabWrapper extends React.Component<{
       memorySize: null,
       runtime: null,
       timeout: null,
-      codeSize: null
-    }
+      codeSize: null,
+    },
   }
   _intervalRef: NodeJS.Timeout
 
@@ -40,7 +40,7 @@ export class TabWrapper extends React.Component<{
     const { logStreams, nextToken, error } = await getLogStreams({
       logGroupName: this.props.tab.logs,
       region: this.props.tab.region,
-      awsProfile: this.props.tab.awsProfile
+      awsProfile: this.props.tab.awsProfile,
     })
 
     let overviewProps = {}
@@ -48,7 +48,7 @@ export class TabWrapper extends React.Component<{
       const res = await getLambdaOverview({
         fnName: this.props.tab.lambda,
         region: this.props.tab.region,
-        awsProfile: this.props.tab.awsProfile
+        awsProfile: this.props.tab.awsProfile,
       })
       overviewProps = res.overviewProps
     }
@@ -58,7 +58,7 @@ export class TabWrapper extends React.Component<{
       loaded: true,
       logStreams,
       overviewProps,
-      nextToken
+      nextToken,
     })
 
     this.initInterval()
@@ -83,18 +83,18 @@ export class TabWrapper extends React.Component<{
 
   async onAutoRefresh() {
     this.setState({
-      refreshInProgres: true
+      refreshInProgres: true,
     })
 
     const { logStreams, error, timestamp } = await getLogStreams({
       logGroupName: this.props.tab.logs,
       limit: 10,
       region: this.props.tab.region,
-      awsProfile: this.props.tab.awsProfile
+      awsProfile: this.props.tab.awsProfile,
     })
 
     const oldStreams = this.state.logStreams.filter(
-      logStream => !logStreams.find(l => l.arn === logStream.arn)
+      (logStream) => !logStreams.find((l) => l.arn === logStream.arn)
     )
 
     this.setState({
@@ -102,24 +102,24 @@ export class TabWrapper extends React.Component<{
       logStreams: [...oldStreams, ...logStreams],
       refreshInProgres: false,
       refreshClickedInProgres: false,
-      lastRefreshed: timestamp
+      lastRefreshed: timestamp,
     })
   }
 
   async onRefresh(limit = 50) {
     this.setState({
-      refreshInProgres: true
+      refreshInProgres: true,
     })
 
     const { logStreams, error, timestamp } = await getLogStreams({
       logGroupName: this.props.tab.logs,
       limit,
       region: this.props.tab.region,
-      awsProfile: this.props.tab.awsProfile
+      awsProfile: this.props.tab.awsProfile,
     })
 
     const oldStreams = this.state.logStreams.filter(
-      logStream => !logStreams.find(l => l.arn === logStream.arn)
+      (logStream) => !logStreams.find((l) => l.arn === logStream.arn)
     )
 
     let overviewProps = {}
@@ -127,7 +127,7 @@ export class TabWrapper extends React.Component<{
       const res = await getLambdaOverview({
         fnName: this.props.tab.lambda,
         region: this.props.tab.region,
-        awsProfile: this.props.tab.awsProfile
+        awsProfile: this.props.tab.awsProfile,
       })
       overviewProps = res.overviewProps
     }
@@ -138,31 +138,31 @@ export class TabWrapper extends React.Component<{
       refreshInProgres: false,
       refreshClickedInProgres: false,
       overviewProps,
-      lastRefreshed: timestamp
+      lastRefreshed: timestamp,
     })
   }
 
   async onLoadMore() {
     this.setState({
-      loadMoreInProgress: true
+      loadMoreInProgress: true,
     })
 
     const { logStreams, nextToken, error } = await getLogStreams({
       logGroupName: this.props.tab.logs,
       region: this.props.tab.region,
       nextToken: this.state.nextToken,
-      awsProfile: this.props.tab.awsProfile
+      awsProfile: this.props.tab.awsProfile,
     })
 
     const oldStreams = this.state.logStreams.filter(
-      logStream => !logStreams.find(l => l.arn === logStream.arn)
+      (logStream) => !logStreams.find((l) => l.arn === logStream.arn)
     )
 
     this.setState({
       error,
       loadMoreInProgress: false,
       logStreams: [...oldStreams, ...logStreams],
-      nextToken
+      nextToken,
     })
   }
 
@@ -176,7 +176,7 @@ export class TabWrapper extends React.Component<{
               className="toggle"
               onClick={() => {
                 const isEnabled = this.props.autoRefreshInterval > 500
-                setAutoRefresh(!isEnabled).then(autoRefreshInterval => {
+                setAutoRefresh(!isEnabled).then((autoRefreshInterval) => {
                   this.props.onAutoRefreshChange(autoRefreshInterval)
                 })
               }}
@@ -189,7 +189,7 @@ export class TabWrapper extends React.Component<{
             onClick={() => {
               if (!this.state.refreshInProgres) {
                 this.setState({
-                  refreshClickedInProgres: true
+                  refreshClickedInProgres: true,
                 })
                 this.onRefresh()
               }
