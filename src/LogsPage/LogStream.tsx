@@ -48,14 +48,14 @@ export class LogStream extends React.Component<{
   constructor(params) {
     super({
       ...params,
-      search: params.search || ''
+      search: params.search || '',
     })
 
     this.state = {
       groupPerRequest: document.vscodeData.groupPerRequest,
       loaded: false,
       preparedMessages: [],
-      messages: []
+      messages: [],
     }
   }
 
@@ -64,12 +64,12 @@ export class LogStream extends React.Component<{
       const {
         logEvents,
         nextBackwardToken,
-        nextForwardToken
+        nextForwardToken,
       } = await getLogEvents({
         logGroup: this.props.logGroup,
         logStream: this.props.logStream,
         region: this.props.region,
-        awsProfile: this.props.awsProfile
+        awsProfile: this.props.awsProfile,
       })
 
       this.setState({
@@ -80,27 +80,27 @@ export class LogStream extends React.Component<{
         messages: logEvents.map((log, i) => ({
           timestamp: log.timestamp,
           messageShort: log.message.slice(0, 500),
-          messageLong: log.message
+          messageLong: log.message,
         })),
         preparedMessages: prepareMessagesArr(
           logEvents.map((log, i) => ({
             timestamp: log.timestamp,
             messageShort: log.message.slice(0, 500),
-            messageLong: log.message
+            messageLong: log.message,
           })),
           this.state.groupPerRequest,
           this.props.search
-        )
+        ),
       })
     } catch (error) {
       if (error.ignore) {
         return this.setState({
-          loaded: true
+          loaded: true,
         })
       }
       this.setState({
         loaded: true,
-        error
+        error,
       })
       console.error(error)
     }
@@ -136,14 +136,14 @@ export class LogStream extends React.Component<{
           this.state.messages,
           this.state.groupPerRequest,
           this.props.search
-        )
+        ),
       })
     }
   }
 
   async onRetryNew() {
     this.setState({
-      loadingNew: true
+      loadingNew: true,
     })
     try {
       const { logEvents, nextForwardToken } = await getLogEvents({
@@ -151,7 +151,7 @@ export class LogStream extends React.Component<{
         logStream: this.props.logStream,
         nextToken: this.state.nextForwardToken,
         region: this.props.region,
-        awsProfile: this.props.awsProfile
+        awsProfile: this.props.awsProfile,
       })
 
       this.setState({
@@ -162,8 +162,8 @@ export class LogStream extends React.Component<{
           ...logEvents.map((log, i) => ({
             timestamp: log.timestamp,
             messageShort: log.message.slice(0, 500),
-            messageLong: log.message
-          }))
+            messageLong: log.message,
+          })),
         ],
         preparedMessages: prepareMessagesArr(
           [
@@ -171,23 +171,23 @@ export class LogStream extends React.Component<{
             ...logEvents.map((log, i) => ({
               timestamp: log.timestamp,
               messageShort: log.message.slice(0, 500),
-              messageLong: log.message
-            }))
+              messageLong: log.message,
+            })),
           ],
           this.state.groupPerRequest,
           this.props.search
         ),
-        nextForwardToken
+        nextForwardToken,
       })
     } catch (error) {
       if (error.ignore) {
         return this.setState({
-          loadingNew: false
+          loadingNew: false,
         })
       }
       this.setState({
         loadingNew: false,
-        error
+        error,
       })
       console.error(error)
     }
@@ -195,7 +195,7 @@ export class LogStream extends React.Component<{
 
   async onRetryOld() {
     this.setState({
-      loadingOld: true
+      loadingOld: true,
     })
     try {
       const { logEvents, nextBackwardToken } = await getLogEvents({
@@ -203,7 +203,7 @@ export class LogStream extends React.Component<{
         logStream: this.props.logStream,
         nextToken: this.state.nextBackwardToken,
         region: this.props.region,
-        awsProfile: this.props.awsProfile
+        awsProfile: this.props.awsProfile,
       })
 
       this.setState({
@@ -213,33 +213,33 @@ export class LogStream extends React.Component<{
           ...logEvents.map((log, i) => ({
             timestamp: log.timestamp,
             messageShort: log.message.slice(0, 500),
-            messageLong: log.message
+            messageLong: log.message,
           })),
-          ...this.state.messages
+          ...this.state.messages,
         ],
         preparedMessages: prepareMessagesArr(
           [
             ...logEvents.map((log, i) => ({
               timestamp: log.timestamp,
               messageShort: log.message.slice(0, 500),
-              messageLong: log.message
+              messageLong: log.message,
             })),
-            ...this.state.messages
+            ...this.state.messages,
           ],
           this.state.groupPerRequest,
           this.props.search
         ),
-        nextBackwardToken
+        nextBackwardToken,
       })
     } catch (error) {
       if (error.ignore) {
         return this.setState({
-          loadingOld: false
+          loadingOld: false,
         })
       }
       this.setState({
         loadingOld: false,
-        error
+        error,
       })
       console.error(error)
     }
@@ -248,51 +248,55 @@ export class LogStream extends React.Component<{
   render() {
     return this.state.loaded ? (
       [
-        this.props.hideSearchAndLoadMore !== true && <div className="logstream-options" key="options">
-          <Input.Search
-            onChange={e => {
-              if (this.props.onSearchValChange) {
-                this.props.onSearchValChange(e.target.value)
-              }
-            }}
-            value={this.props.search}
-            placeholder="search"
-            allowClear={true}
-            size="small"
-          />
-          <Checkbox
-            checked={this.state.groupPerRequest}
-            onChange={e => {
-              this.setState({
-                groupPerRequest: e.target.checked,
-                preparedMessages: prepareMessagesArr(
-                  this.state.messages,
-                  e.target.checked,
-                  this.props.search
-                )
-              })
-            }}
-          >
-            Group per request
-          </Checkbox>
-        </div>,
-        this.props.hideSearchAndLoadMore !== true && <div className="retry-message retry-message-old" key="retryold">
-          {this.state.loadingOld ? (
-            'loading older events...'
-          ) : (
-            <span>
-              No older events found at the moment.
-              <span
-                className="spanlink retry-link"
-                onClick={this.onRetryOld.bind(this)}
-              >
-                Retry
+        this.props.hideSearchAndLoadMore !== true && (
+          <div className="logstream-options" key="options">
+            <Input.Search
+              onChange={(e) => {
+                if (this.props.onSearchValChange) {
+                  this.props.onSearchValChange(e.target.value)
+                }
+              }}
+              value={this.props.search}
+              placeholder="search"
+              allowClear={true}
+              size="small"
+            />
+            <Checkbox
+              checked={this.state.groupPerRequest}
+              onChange={(e) => {
+                this.setState({
+                  groupPerRequest: e.target.checked,
+                  preparedMessages: prepareMessagesArr(
+                    this.state.messages,
+                    e.target.checked,
+                    this.props.search
+                  ),
+                })
+              }}
+            >
+              Group per request
+            </Checkbox>
+          </div>
+        ),
+        this.props.hideSearchAndLoadMore !== true && (
+          <div className="retry-message retry-message-old" key="retryold">
+            {this.state.loadingOld ? (
+              'loading older events...'
+            ) : (
+              <span>
+                No older events found at the moment.
+                <span
+                  className="spanlink retry-link"
+                  onClick={this.onRetryOld.bind(this)}
+                >
+                  Retry
+                </span>
               </span>
-            </span>
-          )}
-        </div>,
+            )}
+          </div>
+        ),
         <Collapse key="collapse" bordered={false}>
-          {this.state.preparedMessages.map(message => {
+          {this.state.preparedMessages.map((message) => {
             return (
               <Panel
                 key={message.key}
@@ -314,7 +318,7 @@ export class LogStream extends React.Component<{
                       )}
                       {message.shortMessageMatched &&
                       message.shortMessageMatched.length
-                        ? message.shortMessageMatched.map(tag => (
+                        ? message.shortMessageMatched.map((tag) => (
                             <span className="event-tag">{tag}</span>
                           ))
                         : message.messageShort}
@@ -332,21 +336,23 @@ export class LogStream extends React.Component<{
         this.state.error ? (
           <div className="error">{this.state.error}</div>
         ) : null,
-        this.props.hideSearchAndLoadMore !== true && <div className="retry-message retry-message-new" key="retrynew">
-          {this.state.loadingNew ? (
-            'loading new events...'
-          ) : (
-            <span>
-              No newer events found at the moment.
-              <span
-                className="spanlink retry-link"
-                onClick={this.onRetryNew.bind(this)}
-              >
-                Retry
+        this.props.hideSearchAndLoadMore !== true && (
+          <div className="retry-message retry-message-new" key="retrynew">
+            {this.state.loadingNew ? (
+              'loading new events...'
+            ) : (
+              <span>
+                No newer events found at the moment.
+                <span
+                  className="spanlink retry-link"
+                  onClick={this.onRetryNew.bind(this)}
+                >
+                  Retry
+                </span>
               </span>
-            </span>
-          )}
-        </div>
+            )}
+          </div>
+        ),
       ]
     ) : (
       <div className="retry-message">loading new events...</div>
@@ -461,7 +467,7 @@ export function prepareMessagesArr(
       shortMessageMatched,
       searchMatches,
       index: i,
-      key
+      key,
     }
   })
 
@@ -479,11 +485,11 @@ export function prepareMessagesArr(
   }, {} as any)
 
   let groupedMessagesFlatted: any[] = []
-  Object.keys(groupedMessages).forEach(reqId => {
+  Object.keys(groupedMessages).forEach((reqId) => {
     const grouped = groupedMessages[reqId]
     let shortMessageMatched
     const withShortMessageMatched = grouped.find(
-      m => m.shortMessageMatched.length
+      (m) => m.shortMessageMatched.length
     )
 
     if (withShortMessageMatched) {
@@ -497,7 +503,7 @@ export function prepareMessagesArr(
       shortMessageMatched,
       searchMatches: grouped.reduce((acc, curr) => acc + curr.searchMatches, 0),
       messageShort: grouped[0].messageShort,
-      messagesLong: grouped.map((m: any) => m.messageLong)
+      messagesLong: grouped.map((m: any) => m.messageLong),
     })
   })
 
