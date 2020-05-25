@@ -1,24 +1,19 @@
 import './queryFormHeader.css'
 import React from 'react'
 import { Icon, Menu, Radio, Dropdown } from 'antd'
-import { License } from '../../getLicense'
 
 export function QueryFormHeader({
   queryType,
   indexes,
   selectedIndex,
-  license,
   onQueryTypeChange,
   onIndexChange,
-  onLicenseClick,
 }: {
   queryType: any
   indexes: any
   selectedIndex: any
-  license: License
   onQueryTypeChange: any
   onIndexChange: any
-  onLicenseClick
 }) {
   return (
     <div className="query-form">
@@ -53,13 +48,6 @@ export function QueryFormHeader({
           </Dropdown>
         ) : null}
       </div>
-      {license?.inTrial && license?.daysRemaining ? (
-        <div className="trial-counter" onClick={onLicenseClick}>
-          {license.daysRemaining} remaining
-        </div>
-      ) : (
-        <div></div>
-      )}
     </div>
   )
 }

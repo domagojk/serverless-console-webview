@@ -14,7 +14,6 @@ import {
   discardChange,
   openChange,
   dynamodbOptions,
-  showLicenseDialog,
 } from '../asyncData/dynamoDb'
 import { Icon, Button, Tooltip, Menu, Checkbox } from 'antd'
 import { RelativeTime } from '../LogsPage/RelativeTime'
@@ -832,7 +831,6 @@ export class DynamoDb extends React.Component<any, State> {
           <QueryFormHeader
             queryType={this.state.selectedQueryType}
             indexes={this.state.indexes}
-            license={this.state.license}
             selectedIndex={this.state.selectedIndex}
             onQueryTypeChange={(queryType) => {
               this.setState({
@@ -843,9 +841,6 @@ export class DynamoDb extends React.Component<any, State> {
               this.setState({
                 selectedIndex,
               })
-            }}
-            onLicenseClick={() => {
-              showLicenseDialog()
             }}
           />
           <QueryFormFilter
