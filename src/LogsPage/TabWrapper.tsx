@@ -1,9 +1,10 @@
 import React from 'react'
+import hotkeys from 'hotkeys-js'
 import './tabWrapper.css'
 import { LogStreamList } from './LogStreamList'
-import { showLogsOptions } from '../asyncData/asyncData'
-import { Input, Icon } from 'antd'
-// import { LogStream } from './LogStream'
+import { showLogsOptions, getLambdaOverview } from '../asyncData/asyncData'
+import { Input, Icon, Modal } from 'antd'
+import { Overview } from './Overview'
 
 export class TabWrapper extends React.Component<{
   tab: any
@@ -12,18 +13,28 @@ export class TabWrapper extends React.Component<{
   isActive: boolean
 }> {
   state = {
-    refreshClickedInProgres: false,
-    refreshInProgres: false,
+    refreshInProgress: false,
+    overviewLoadInProgress: false,
     oldRefreshTimestamp: Date.now(),
     newRefreshTimestamp: Date.now(),
     search: '',
     groupPerRequest: document.vscodeData?.settings?.groupPerRequest,
   }
   _timeout: NodeJS.Timeout
+  _inputRef: any
+
+  componentDidMount() {
+    const isMac = navigator?.platform?.toUpperCase()?.indexOf('MAC') >= 0
+    const shortcut = isMac ? 'command+f' : 'ctrl+f'
+    hotkeys(shortcut, () => {
+      this._inputRef?.focus()
+      return false
+    })
+  }
 
   onRefreshed() {
     this.setState({
-      refreshClickedInProgres: false,
+      refreshInProgress: false,
       oldRefreshTimestamp: Date.now(),
     })
 
@@ -46,7 +57,7 @@ export class TabWrapper extends React.Component<{
     if (this.props.autoRefreshInterval > 500 && this.props.isActive) {
       this.setState({
         newRefreshTimestamp: Date.now(),
-        refreshClickedInProgres: true,
+        refreshInProgress: true,
       })
     }
   }
@@ -54,7 +65,7 @@ export class TabWrapper extends React.Component<{
   onManualRefresh() {
     this.setState({
       newRefreshTimestamp: Date.now(),
-      refreshClickedInProgres: true,
+      refreshInProgress: true,
     })
   }
 
@@ -64,6 +75,9 @@ export class TabWrapper extends React.Component<{
         <div className="top-right-options">
           <div className="logstream-options">
             <Input.Search
+              ref={(input) => {
+                this._inputRef = input
+              }}
               onChange={(e) => {
                 this.setState({
                   search: e.target.value,
@@ -76,11 +90,48 @@ export class TabWrapper extends React.Component<{
             />
           </div>
 
+          {this.props.tab.lambda && (
+            <Icon
+              className="option"
+              type={
+                this.state.overviewLoadInProgress ? 'loading' : 'info-circle'
+              }
+              onClick={async () => {
+                this.setState({
+                  overviewLoadInProgress: true,
+                })
+                const res = await getLambdaOverview({
+                  fnName: this.props.tab.lambda,
+                  region: this.props.tab.region,
+                  awsProfile: this.props.tab.awsProfile,
+                })
+                const overviewProps = res.overviewProps
+
+                Modal.info({
+                  title: 'Function Overview',
+                  content: (
+                    <Overview
+                      {...{
+                        ...overviewProps,
+                        name: this.props.tab.lambda,
+                      }}
+                    />
+                  ),
+                  onOk() {},
+                })
+
+                this.setState({
+                  overviewLoadInProgress: false,
+                })
+              }}
+            />
+          )}
+
           <Icon
             className="option"
-            type={this.state.refreshClickedInProgres ? 'loading' : 'sync'}
+            type={this.state.refreshInProgress ? 'loading' : 'sync'}
             onClick={() => {
-              if (!this.state.refreshInProgres) {
+              if (!this.state.refreshInProgress) {
                 this.onManualRefresh()
               }
             }}

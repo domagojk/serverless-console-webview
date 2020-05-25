@@ -1,6 +1,7 @@
 import 'react-base-table/styles.css'
 import './dynamoDb.css'
 import './clipboardColumns.css'
+import hotkeys from 'hotkeys-js'
 import React from 'react'
 import copy from 'copy-to-clipboard'
 import BaseTable, { AutoResizer } from 'react-base-table'
@@ -208,6 +209,7 @@ export class DynamoDb extends React.Component<any, State> {
     sortKey: null as string,
   }
   contextMenuRef: React.RefObject<any>
+  _firstInputRef: any
 
   constructor(props) {
     super(props)
@@ -251,6 +253,12 @@ export class DynamoDb extends React.Component<any, State> {
           },
         })
       }
+    })
+
+    const shortcut = isMac ? 'command+f' : 'ctrl+f'
+    hotkeys(shortcut, () => {
+      this._firstInputRef?.focus()
+      return false
     })
   }
 
@@ -872,6 +880,9 @@ export class DynamoDb extends React.Component<any, State> {
                       },
                     ],
               })
+            }}
+            onRef={(input) => {
+              this._firstInputRef = input
             }}
             searchButtonLabel={
               this.state.isLoading

@@ -49,6 +49,7 @@ export function QueryFormFilter({
   onFilterRemove,
   onChange,
   onEnter,
+  onRef,
 }: {
   queryFilters: QueryFilter[]
   attributesSchema: Record<string, string>
@@ -58,8 +59,9 @@ export function QueryFormFilter({
   onFilterRemove: any
   onChange: any
   onEnter: any
+  onRef: any
 }) {
-  const fieldNameLastFilter = useRef(null)
+  let fieldNameLastFilter = useRef(null)
   const onFilterAddWithFocus = () => {
     onFilterAdd()
     setTimeout(() => fieldNameLastFilter?.current?.focus())
@@ -75,9 +77,12 @@ export function QueryFormFilter({
         return (
           <div className="query-filter-item" key={filter.id}>
             <AutoComplete
-              ref={
-                index === queryFilters.length - 1 ? fieldNameLastFilter : null
-              }
+              ref={(input) => {
+                if (index === queryFilters.length - 1) {
+                  fieldNameLastFilter.current = input
+                }
+                onRef(input)
+              }}
               style={{ width: 130, marginRight: 5 }}
               disabled={filter.keyCondition}
               dataSource={columns

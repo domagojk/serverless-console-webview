@@ -18,8 +18,11 @@ export function Overview(
 ) {
   return (
     <div className="overview-section">
-      <h2>Overview</h2>
-      <Descriptions size="small" className="overview-content">
+      <Descriptions
+        size="default"
+        column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
+        className="overview-content"
+      >
         <Item label="Name">
           <OverviewValue value={props.name} type="string" />
         </Item>
@@ -46,7 +49,7 @@ export function Overview(
 
 function OverviewValue({
   value,
-  type
+  type,
 }: {
   value: any
   type: 'string' | 'bytes' | 'relativeTime' | 'seconds' | 'megabytes'
