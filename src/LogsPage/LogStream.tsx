@@ -1,6 +1,6 @@
 import React from 'react'
 import { getLogEvents } from '../asyncData/asyncData'
-import { Collapse, Checkbox, Input } from 'antd'
+import { Collapse } from 'antd'
 import moment from 'moment'
 import { LogEvent } from './LogEvent'
 import { RelativeTime } from './RelativeTime'
@@ -10,18 +10,15 @@ const { Panel } = Collapse
 export class LogStream extends React.Component<{
   logStream: string
   logGroup: string
-  autoRefreshInterval?: number
-  isFirstLogStream?: boolean
-  isExpanded?: boolean
   region?: string
   awsProfile?: string
   search?: string
   onSearchValChange?: any
   hideSearchAndLoadMore?: boolean
+  groupPerRequest?: boolean
 }> {
   state: {
     loaded: boolean
-    groupPerRequest: boolean
     loadingNew?: boolean
     loadingOld?: boolean
     nextBackwardToken?: string
@@ -52,7 +49,6 @@ export class LogStream extends React.Component<{
     })
 
     this.state = {
-      groupPerRequest: document.vscodeData.groupPerRequest,
       loaded: false,
       preparedMessages: [],
       messages: [],
@@ -88,7 +84,7 @@ export class LogStream extends React.Component<{
             messageShort: log.message.slice(0, 500),
             messageLong: log.message,
           })),
-          this.state.groupPerRequest,
+          this.props.groupPerRequest,
           this.props.search
         ),
       })
@@ -104,37 +100,17 @@ export class LogStream extends React.Component<{
       })
       console.error(error)
     }
-
-    this.initInterval()
-  }
-
-  initInterval() {
-    clearInterval(this._intervalRef)
-    if (
-      this.props.isExpanded &&
-      this.props.autoRefreshInterval > 500 &&
-      this.props.isFirstLogStream
-    ) {
-      this._intervalRef = setInterval(() => {
-        this.onRetryNew()
-      }, this.props.autoRefreshInterval)
-    }
   }
 
   componentDidUpdate(prevProps) {
     if (
-      prevProps.isExpanded !== this.props.isExpanded ||
-      prevProps.isFirstLogStream !== this.props.isFirstLogStream ||
-      prevProps.autoRefreshInterval !== this.props.autoRefreshInterval
+      prevProps.search !== this.props.search ||
+      prevProps.groupPerRequest !== this.props.groupPerRequest
     ) {
-      this.initInterval()
-    }
-
-    if (prevProps.search !== this.props.search) {
       this.setState({
         preparedMessages: prepareMessagesArr(
           this.state.messages,
-          this.state.groupPerRequest,
+          this.props.groupPerRequest,
           this.props.search
         ),
       })
@@ -174,7 +150,7 @@ export class LogStream extends React.Component<{
               messageLong: log.message,
             })),
           ],
-          this.state.groupPerRequest,
+          this.props.groupPerRequest,
           this.props.search
         ),
         nextForwardToken,
@@ -226,7 +202,7 @@ export class LogStream extends React.Component<{
             })),
             ...this.state.messages,
           ],
-          this.state.groupPerRequest,
+          this.props.groupPerRequest,
           this.props.search
         ),
         nextBackwardToken,
@@ -248,36 +224,6 @@ export class LogStream extends React.Component<{
   render() {
     return this.state.loaded ? (
       [
-        this.props.hideSearchAndLoadMore !== true && (
-          <div className="logstream-options" key="options">
-            <Input.Search
-              onChange={(e) => {
-                if (this.props.onSearchValChange) {
-                  this.props.onSearchValChange(e.target.value)
-                }
-              }}
-              value={this.props.search}
-              placeholder="search"
-              allowClear={true}
-              size="small"
-            />
-            <Checkbox
-              checked={this.state.groupPerRequest}
-              onChange={(e) => {
-                this.setState({
-                  groupPerRequest: e.target.checked,
-                  preparedMessages: prepareMessagesArr(
-                    this.state.messages,
-                    e.target.checked,
-                    this.props.search
-                  ),
-                })
-              }}
-            >
-              Group per request
-            </Checkbox>
-          </div>
-        ),
         this.props.hideSearchAndLoadMore !== true && (
           <div className="retry-message retry-message-old" key="retryold">
             {this.state.loadingOld ? (

@@ -441,3 +441,22 @@ export function settingsChanged(params: Record<string, any>) {
     payload: params,
   })
 }
+
+export function showLogsOptions(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const messageId = Math.random()
+    vscode.postMessage({
+      command: 'showLogsOptions',
+      messageId,
+      payload: {},
+    })
+
+    subscriptions[messageId] = (message: any) => {
+      if (message.error) {
+        reject(message.error)
+      } else {
+        resolve(message)
+      }
+    }
+  })
+}

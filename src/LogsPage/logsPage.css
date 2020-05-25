@@ -35,12 +35,25 @@
   padding: 5px;
 }
 
-.refresh-option {
+.top-right-options {
   text-align: right;
   line-height: 1;
   position: absolute;
   right: 0;
   top: 10px;
+  display: flex;
+  align-items: center;
+}
+.top-right-options i.option {
+  font-size: 14px;
+  opacity: 0.5;
+  cursor: pointer;
+}
+.top-right-options i.option:hover {
+  opacity: 1;
+}
+.top-right-options i.option:not(:last-child) {
+  margin-right: 10px;
 }
 
 .last-refreshed {
@@ -85,7 +98,12 @@
 }
 
 .log-section {
-  margin: 10px;
+  overflow: auto;
+  position: fixed;
+  right: 15px;
+  left: 65px;
+  bottom: 10px;
+  top: 60px;
 }
 .log-section header {
   display: flex;
@@ -137,7 +155,7 @@
 .logevent-header .relative-time {
   font-size: 0.9em;
   font-weight: bold;
-  width: 105px;
+  width: 130px;
   white-space: nowrap;
 }
 .logevent-header .abs-time {
@@ -147,7 +165,7 @@
 }
 .logstream > .relative-time {
   display: inline-block;
-  width: 120px;
+  width: 130px;
 }
 .logstream > .abs-time {
   font-size: 0.9em;
@@ -195,16 +213,11 @@
 }
 
 .logstream-options {
-  padding-left: 15px;
-  opacity: 0.6;
-}
-.logstream-options .ant-checkbox-wrapper {
-  color: var(--vscode-editor-foreground);
-  font-size: 0.8em;
+  opacity: 0.8;
 }
 .logstream-options .ant-input-search {
   margin-right: 15px;
-  width: 150px;
+  width: 180px;
 }
 .logstream-options .ant-input-search i {
   color: var(--vscode-editor-foreground);

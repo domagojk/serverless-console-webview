@@ -586,14 +586,13 @@ export class SearchPage extends React.Component<
                     })
                     .map((res) => (
                       <LogStream
-                        isFirstLogStream={false}
-                        isExpanded={false}
                         search={this.state.searchStr}
                         hideSearchAndLoadMore={true}
                         logGroup={this.props.logGroupName}
                         region={this.props.region}
                         awsProfile={this.props.awsProfile}
                         logStream={res.logStream}
+                        groupPerRequest={true}
                       />
                     ))}
                 </div>

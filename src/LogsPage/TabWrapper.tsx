@@ -1,14 +1,9 @@
 import React from 'react'
 import './tabWrapper.css'
 import { LogStreamList } from './LogStreamList'
-import { Overview } from './Overview'
-import { RelativeTime } from './RelativeTime'
-import {
-  getLogStreams,
-  LogStreamData,
-  getLambdaOverview,
-  setAutoRefresh,
-} from '../asyncData/asyncData'
+import { showLogsOptions } from '../asyncData/asyncData'
+import { Input, Icon } from 'antd'
+// import { LogStream } from './LogStream'
 
 export class TabWrapper extends React.Component<{
   tab: any
@@ -19,206 +14,100 @@ export class TabWrapper extends React.Component<{
   state = {
     refreshClickedInProgres: false,
     refreshInProgres: false,
-    loadMoreInProgress: false,
-    loaded: false,
-    error: '',
-    currentToken: '',
-    nextToken: '',
-    logStreams: [] as LogStreamData[],
-    lastRefreshed: Date.now(),
-    overviewProps: {
-      lastModified: null,
-      memorySize: null,
-      runtime: null,
-      timeout: null,
-      codeSize: null,
-    },
+    oldRefreshTimestamp: Date.now(),
+    newRefreshTimestamp: Date.now(),
+    search: '',
+    groupPerRequest: document.vscodeData?.settings?.groupPerRequest,
   }
-  _intervalRef: NodeJS.Timeout
+  _timeout: NodeJS.Timeout
 
-  async componentDidMount() {
-    const { logStreams, nextToken, error } = await getLogStreams({
-      logGroupName: this.props.tab.logs,
-      region: this.props.tab.region,
-      awsProfile: this.props.tab.awsProfile,
-    })
-
-    let overviewProps = {}
-    if (this.props.tab.lambda) {
-      const res = await getLambdaOverview({
-        fnName: this.props.tab.lambda,
-        region: this.props.tab.region,
-        awsProfile: this.props.tab.awsProfile,
-      })
-      overviewProps = res.overviewProps
-    }
-
+  onRefreshed() {
     this.setState({
-      error,
-      loaded: true,
-      logStreams,
-      overviewProps,
-      nextToken,
+      refreshClickedInProgres: false,
+      oldRefreshTimestamp: Date.now(),
     })
 
-    this.initInterval()
-  }
-
-  initInterval() {
-    clearInterval(this._intervalRef)
-    if (this.props.autoRefreshInterval > 500) {
-      this._intervalRef = setInterval(() => {
-        if (this.props.isActive) {
-          this.onAutoRefresh()
-        }
-      }, this.props.autoRefreshInterval)
-    }
+    clearTimeout(this._timeout)
+    this._timeout = setTimeout(() => {
+      this.onAutoRefresh()
+    }, this.props.autoRefreshInterval)
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.autoRefreshInterval !== this.props.autoRefreshInterval) {
-      this.initInterval()
+    if (
+      prevProps.autoRefreshInterval !== this.props.autoRefreshInterval ||
+      prevProps.isActive !== this.props.isActive
+    ) {
+      this.onAutoRefresh()
     }
   }
 
-  async onAutoRefresh() {
-    this.setState({
-      refreshInProgres: true,
-    })
-
-    const { logStreams, error, timestamp } = await getLogStreams({
-      logGroupName: this.props.tab.logs,
-      limit: 10,
-      region: this.props.tab.region,
-      awsProfile: this.props.tab.awsProfile,
-    })
-
-    const oldStreams = this.state.logStreams.filter(
-      (logStream) => !logStreams.find((l) => l.arn === logStream.arn)
-    )
-
-    this.setState({
-      error,
-      logStreams: [...oldStreams, ...logStreams],
-      refreshInProgres: false,
-      refreshClickedInProgres: false,
-      lastRefreshed: timestamp,
-    })
-  }
-
-  async onRefresh(limit = 50) {
-    this.setState({
-      refreshInProgres: true,
-    })
-
-    const { logStreams, error, timestamp } = await getLogStreams({
-      logGroupName: this.props.tab.logs,
-      limit,
-      region: this.props.tab.region,
-      awsProfile: this.props.tab.awsProfile,
-    })
-
-    const oldStreams = this.state.logStreams.filter(
-      (logStream) => !logStreams.find((l) => l.arn === logStream.arn)
-    )
-
-    let overviewProps = {}
-    if (this.props.tab.lambda) {
-      const res = await getLambdaOverview({
-        fnName: this.props.tab.lambda,
-        region: this.props.tab.region,
-        awsProfile: this.props.tab.awsProfile,
+  onAutoRefresh() {
+    if (this.props.autoRefreshInterval > 500 && this.props.isActive) {
+      this.setState({
+        newRefreshTimestamp: Date.now(),
+        refreshClickedInProgres: true,
       })
-      overviewProps = res.overviewProps
     }
-
-    this.setState({
-      error,
-      logStreams: [...oldStreams, ...logStreams],
-      refreshInProgres: false,
-      refreshClickedInProgres: false,
-      overviewProps,
-      lastRefreshed: timestamp,
-    })
   }
 
-  async onLoadMore() {
+  onManualRefresh() {
     this.setState({
-      loadMoreInProgress: true,
-    })
-
-    const { logStreams, nextToken, error } = await getLogStreams({
-      logGroupName: this.props.tab.logs,
-      region: this.props.tab.region,
-      nextToken: this.state.nextToken,
-      awsProfile: this.props.tab.awsProfile,
-    })
-
-    const oldStreams = this.state.logStreams.filter(
-      (logStream) => !logStreams.find((l) => l.arn === logStream.arn)
-    )
-
-    this.setState({
-      error,
-      loadMoreInProgress: false,
-      logStreams: [...oldStreams, ...logStreams],
-      nextToken,
+      newRefreshTimestamp: Date.now(),
+      refreshClickedInProgres: true,
     })
   }
 
   render() {
     return (
       <div>
-        <div className="refresh-option">
-          <span className="autorefresh">
-            Auto Refresh:{' '}
-            <span
-              className="toggle"
-              onClick={() => {
-                const isEnabled = this.props.autoRefreshInterval > 500
-                setAutoRefresh(!isEnabled).then((autoRefreshInterval) => {
-                  this.props.onAutoRefreshChange(autoRefreshInterval)
+        <div className="top-right-options">
+          <div className="logstream-options">
+            <Input.Search
+              onChange={(e) => {
+                this.setState({
+                  search: e.target.value,
                 })
               }}
-            >
-              {this.props.autoRefreshInterval > 500 ? 'ON' : 'OFF'}
-            </span>
-          </span>
-          <span
-            className="spanlink"
-            onClick={() => {
-              if (!this.state.refreshInProgres) {
-                this.setState({
-                  refreshClickedInProgres: true,
-                })
-                this.onRefresh()
-              }
-            }}
-          >
-            {this.state.refreshClickedInProgres ? 'Loading...' : 'Refresh'}
-          </span>
-          <div className="last-refreshed">
-            last refresh:{' '}
-            <RelativeTime
-              time={this.state.lastRefreshed}
-              interval={this.props.autoRefreshInterval > 500 ? 1000 : null}
+              value={this.state.search}
+              placeholder="search"
+              allowClear={true}
+              size="small"
             />
           </div>
-        </div>
-        {this.props.tab.lambda && (
-          <Overview
-            {...{ ...this.state.overviewProps, name: this.props.tab.lambda }}
+
+          <Icon
+            className="option"
+            type={this.state.refreshClickedInProgres ? 'loading' : 'sync'}
+            onClick={() => {
+              if (!this.state.refreshInProgres) {
+                this.onManualRefresh()
+              }
+            }}
           />
-        )}
+          <Icon
+            className="option"
+            type="setting"
+            onClick={async () => {
+              const result = await showLogsOptions()
+              this.setState({
+                groupPerRequest: result.groupPerRequest,
+              })
+
+              this.props.onAutoRefreshChange(result.autoRefreshInterval)
+            }}
+          />
+        </div>
+
         <LogStreamList
           tab={this.props.tab}
-          loaded={this.state.loaded}
-          error={this.state.error}
-          logStreams={this.state.logStreams}
-          nextToken={this.state.nextToken}
-          loadMoreInProgress={this.state.loadMoreInProgress}
-          onLoadMore={this.onLoadMore.bind(this)}
-          autoRefreshInterval={this.props.autoRefreshInterval}
+          search={this.state.search}
+          groupPerRequest={this.state.groupPerRequest}
+          onRefreshed={() => {
+            this.onRefreshed()
+          }}
+          refreshTimestamp={this.state.newRefreshTimestamp}
+          isActive={this.props.isActive}
         />
       </div>
     )
