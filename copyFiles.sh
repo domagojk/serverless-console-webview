@@ -5,7 +5,7 @@ counter=1
 for file in *.js
 do
    extension="${file##*.}"
-   cp $file ../../../../serverless-monitor/resources/webview/build/static/js/main${counter}.${extension}
+   cp $file ../../../../serverless-console/resources/webview/build/static/js/main${counter}.${extension}
    let counter++
 done
 
@@ -15,6 +15,6 @@ counter=1
 for file in *.css
 do
    extension="${file##*.}"
-   cp $file ../../../../serverless-monitor/resources/webview/build/static/css/main${counter}.${extension}
+   cp $file ../../../../serverless-console/resources/webview/build/static/css/main${counter}.${extension}
    let counter++
 done
