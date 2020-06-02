@@ -25,7 +25,6 @@ import { autoDetectDataType } from './autoDetectDataType'
 import { getDomOffset } from './getDomOffset'
 import { sortFunction } from './sortFunction'
 import { stringifyItems } from './stringifyItems'
-import { getLicense, License } from '../getLicense'
 
 type QueryType = 'scan' | 'query'
 
@@ -72,8 +71,6 @@ interface Item {
 }
 
 type State = {
-  license: License
-
   isFooterExpanded: boolean
   isLoading: boolean
   reloadInProgress: boolean
@@ -138,8 +135,6 @@ const isMac = navigator?.platform?.toUpperCase()?.indexOf('MAC') >= 0
 
 export class DynamoDb extends React.Component<any, State> {
   state = {
-    license: getLicense(document.vscodeData.license),
-
     isFooterExpanded: false,
     isLoading: false,
     reloadInProgress: false,
