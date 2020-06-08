@@ -1338,6 +1338,11 @@ export class DynamoDb extends React.Component<any, State> {
 
                             {this.state.fetchedChanges.length ? (
                               <Button
+                                disabled={
+                                  this.state.fetchedChanges.findIndex(
+                                    (f) => f.status === 'inProgress'
+                                  ) !== -1
+                                }
                                 type="primary"
                                 size="small"
                                 onClick={(e) => {
