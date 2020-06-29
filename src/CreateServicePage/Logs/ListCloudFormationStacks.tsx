@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { listCloudFormationStacks } from '../../asyncData/asyncData'
-import { Select } from 'antd'
+import { Select, Input } from 'antd'
 import { RegionSelect } from '../RegionSelect'
 const { Option } = Select
 
@@ -16,6 +16,7 @@ export function ListCloudFormationStacks(props: {
   const [stacks, setStacks] = useState([])
   const [region, setRegion] = useState(props.defaultRegion)
   const [activeStackName, setActiveStackName] = useState(props.defaultStackName)
+  const [dropDownInput, setDropDownInput] = useState(true)
 
   const { awsProfile } = props
 
@@ -23,7 +24,7 @@ export function ListCloudFormationStacks(props: {
     setLoading(true)
     listCloudFormationStacks({
       region,
-      awsProfile
+      awsProfile,
     }).then(({ stacks, error }) => {
       setLoading(false)
       setError(error)
@@ -57,25 +58,61 @@ export function ListCloudFormationStacks(props: {
             <div>{error}</div>
           ) : stacks.length === 0 ? (
             <div>No stacks found</div>
+          ) : dropDownInput ? (
+            <div>
+              <Select
+                showSearch
+                style={{ width: 250 }}
+                value={activeStackName}
+                onChange={setActiveStackName}
+                placeholder="Select a CloudFormation Stack"
+                optionFilterProp="children"
+                filterOption={(input, option) => {
+                  const children: any = option.props.children
+                  return (
+                    children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  )
+                }}
+              >
+                {stacks.map((stackName) => (
+                  <Option key={stackName} value={stackName}>
+                    {stackName}
+                  </Option>
+                ))}
+              </Select>
+              <div
+                style={{
+                  padding: 2,
+                  opacity: 0.5,
+                  textAlign: 'right',
+                  cursor: 'pointer',
+                  fontSize: '0.6rem',
+                }}
+                onClick={() => setDropDownInput(false)}
+              >
+                switch to manual input
+              </div>
+            </div>
           ) : (
-            <Select
-              showSearch
-              style={{ width: 250 }}
-              value={activeStackName}
-              onChange={setActiveStackName}
-              placeholder="Select a CloudFormation Stack"
-              optionFilterProp="children"
-              filterOption={(input, option) => {
-                const children: any = option.props.children
-                return children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }}
-            >
-              {stacks.map(stackName => (
-                <Option key={stackName} value={stackName}>
-                  {stackName}
-                </Option>
-              ))}
-            </Select>
+            <div>
+              <Input
+                style={{ width: 250 }}
+                value={activeStackName}
+                onChange={(e) => setActiveStackName(e.target.value)}
+              />
+              <div
+                style={{
+                  padding: 2,
+                  opacity: 0.5,
+                  textAlign: 'right',
+                  cursor: 'pointer',
+                  fontSize: '0.6rem',
+                }}
+                onClick={() => setDropDownInput(true)}
+              >
+                switch to dropdown input
+              </div>
+            </div>
           )}
         </td>
       </tr>
