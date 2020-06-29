@@ -26,16 +26,17 @@ export function ListCustomLogGroups(props: {
   const [activeLogGroup, setActiveLogGroup] = useState(props.defaultLogGroup)
   const [useLogGroupName, setUseLogGroupName] = useState(!Boolean(props.title))
   const [customTitle, setCustomTitle] = useState(props.title)
+  const [dropDownInput, setDropDownInput] = useState(true)
 
   const { awsProfile } = props
-  
+
   let textInput: any = React.createRef()
 
   useEffect(() => {
     setLoading(true)
     describeLogGroups({
       region,
-      awsProfile
+      awsProfile,
     }).then(({ logGroups, error }) => {
       setLoading(false)
       setError(error)
@@ -50,7 +51,7 @@ export function ListCustomLogGroups(props: {
       stage: props.stage,
       region: region,
       useLogGroupName: useLogGroupName,
-      customTitle: customTitle
+      customTitle: customTitle,
     })
   }, [activeLogGroup, useLogGroupName, customTitle])
 
@@ -75,25 +76,61 @@ export function ListCustomLogGroups(props: {
             <div>{error}</div>
           ) : logGroups.length === 0 ? (
             <div>No stacks found</div>
+          ) : dropDownInput ? (
+            <div>
+              <Select
+                showSearch
+                style={{ width: 250 }}
+                value={activeLogGroup}
+                onChange={setActiveLogGroup}
+                placeholder="Select a CloudFormation Stack"
+                optionFilterProp="children"
+                filterOption={(input, option) => {
+                  const children: any = option.props.children
+                  return (
+                    children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  )
+                }}
+              >
+                {logGroups.map((logGroup) => (
+                  <Option key={logGroup} value={logGroup}>
+                    {logGroup}
+                  </Option>
+                ))}
+              </Select>
+              <div
+                style={{
+                  padding: 2,
+                  opacity: 0.5,
+                  textAlign: 'right',
+                  cursor: 'pointer',
+                  fontSize: '0.6rem',
+                }}
+                onClick={() => setDropDownInput(false)}
+              >
+                switch to manual input
+              </div>
+            </div>
           ) : (
-            <Select
-              showSearch
-              style={{ width: 250 }}
-              value={activeLogGroup}
-              onChange={setActiveLogGroup}
-              placeholder="Select a CloudFormation Stack"
-              optionFilterProp="children"
-              filterOption={(input, option) => {
-                const children: any = option.props.children
-                return children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }}
-            >
-              {logGroups.map(logGroup => (
-                <Option key={logGroup} value={logGroup}>
-                  {logGroup}
-                </Option>
-              ))}
-            </Select>
+            <div>
+              <Input
+                style={{ width: 250 }}
+                value={activeLogGroup}
+                onChange={(e) => setActiveLogGroup(e.target.value)}
+              />
+              <div
+                style={{
+                  padding: 2,
+                  opacity: 0.5,
+                  textAlign: 'right',
+                  cursor: 'pointer',
+                  fontSize: '0.6rem',
+                }}
+                onClick={() => setDropDownInput(true)}
+              >
+                switch to dropdown input
+              </div>
+            </div>
           )}
         </td>
       </tr>
@@ -105,7 +142,7 @@ export function ListCustomLogGroups(props: {
               className="config-title"
               style={{ width: 150, opacity: useLogGroupName ? 1 : 0.5 }}
               checked={useLogGroupName}
-              onChange={e => {
+              onChange={(e) => {
                 setUseLogGroupName(e.target.checked)
                 textInput.current.focus()
               }}
@@ -117,7 +154,7 @@ export function ListCustomLogGroups(props: {
               style={{ width: 100, opacity: useLogGroupName ? 0 : 1 }}
               ref={textInput}
               value={customTitle}
-              onChange={e => setCustomTitle(e.target.value)}
+              onChange={(e) => setCustomTitle(e.target.value)}
             />
           </td>
         ) : (
