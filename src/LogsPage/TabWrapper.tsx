@@ -3,7 +3,7 @@ import hotkeys from 'hotkeys-js'
 import './tabWrapper.css'
 import { LogStreamList } from './LogStreamList'
 import { showLogsOptions, getLambdaOverview } from '../asyncData/asyncData'
-import { Input, Icon, Modal } from 'antd'
+import { Input, Icon, Modal, Tooltip } from 'antd'
 import { Overview } from './Overview'
 
 export class TabWrapper extends React.Component<{
@@ -148,6 +148,8 @@ export class TabWrapper extends React.Component<{
               this.props.onAutoRefreshChange(result.autoRefreshInterval)
             }}
           />
+
+          <div style={{ width: 20, height: 10 }} />
         </div>
 
         <LogStreamList

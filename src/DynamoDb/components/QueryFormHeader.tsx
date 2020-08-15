@@ -1,6 +1,7 @@
 import './queryFormHeader.css'
 import React from 'react'
-import { Icon, Menu, Radio, Dropdown } from 'antd'
+import { Icon, Menu, Radio, Dropdown, Tooltip } from 'antd'
+import { CoffeeIcon } from '../../AddServicePage/CoffeeIcon'
 
 export function QueryFormHeader({
   queryType,
@@ -47,6 +48,13 @@ export function QueryFormHeader({
             </span>
           </Dropdown>
         ) : null}
+      </div>
+      <div className="buymeacoffee">
+        <Tooltip title="Buy me a coffee?" placement="bottomLeft">
+          <a href="https://www.buymeacoffee.com/y39DWQf">
+            <Icon component={CoffeeIcon} />
+          </a>
+        </Tooltip>
       </div>
     </div>
   )

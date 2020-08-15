@@ -16,12 +16,13 @@
 .dynamodb-page .query-form .index-dropdown i {
   margin-left: 5px;
 }
-.dynamodb-page .query-form .trial-counter {
+.dynamodb-page .query-form .buymeacoffee {
   margin-right: 10px;
   cursor: pointer;
 }
-.dynamodb-page .query-form .trial-counter:hover {
-  opacity: 0.8;
+.dynamodb-page .query-form .buymeacoffee i {
+  width: 20px;
+  height: 20px;
 }
 
 .dynamodb-page .query-form .right {

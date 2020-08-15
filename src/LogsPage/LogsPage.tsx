@@ -4,6 +4,7 @@ import { Tabs, Icon, Tooltip } from 'antd'
 import { TabWrapper } from './TabWrapper'
 import { SearchPage } from './SearchPage'
 import { viewstateChanged } from '../asyncData/asyncData'
+import { CoffeeIcon } from '../AddServicePage/CoffeeIcon'
 
 const { TabPane } = Tabs
 
@@ -120,6 +121,13 @@ export function LogsPage() {
               )}
             </TabPane>
           ))}
+          <div style={{ position: 'absolute', top: 12, right: 0 }}>
+            <Tooltip title="Buy me a coffee?" placement="bottomLeft">
+              <a href="https://www.buymeacoffee.com/y39DWQf">
+                <Icon style={{ width: 19 }} component={CoffeeIcon} />
+              </a>
+            </Tooltip>
+          </div>
         </Tabs>
       </div>
     </div>
