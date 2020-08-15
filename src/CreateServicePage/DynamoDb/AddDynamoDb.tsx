@@ -10,6 +10,8 @@ type Props = {
   region: string
 }
 type State = {
+  connection: string
+  endpoint: string
   awsProfile: string
   region: string
   startedTrial: boolean
@@ -24,6 +26,8 @@ export class AddDynamoDb extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
+      connection: 'remote',
+      endpoint: 'http://localhost:8000',
       loading: false,
       error: null,
       table: null,
@@ -41,8 +45,9 @@ export class AddDynamoDb extends React.Component<Props, State> {
       loading: true,
     })
     const res = await listDynamoDbTables({
-      region: this.state.region,
+      region: this.state.connection === 'local' ? 'local' : this.state.region,
       awsProfile: this.state.awsProfile,
+      endpoint: this.state.endpoint
     })
 
     this.setState({
@@ -70,7 +75,9 @@ export class AddDynamoDb extends React.Component<Props, State> {
 
     if (
       prevState.awsProfile !== this.state.awsProfile ||
-      prevState.region !== this.state.region
+      prevState.region !== this.state.region ||
+      prevState.endpoint !== this.state.endpoint ||
+      prevState.connection !== this.state.connection
     ) {
       this.fetchTableNames()
     }
@@ -81,39 +88,72 @@ export class AddDynamoDb extends React.Component<Props, State> {
       <div>
         <table className="form-table">
           <tr>
-            <td className="td-left">AWS Profile</td>
+            <td className="td-left">Connection</td>
             <td>
-              {document.vscodeData.profiles &&
-              document.vscodeData.profiles.length &&
-              document.vscodeData.profiles.includes(this.props.awsProfile) ? (
-                <Select
-                  value={this.state.awsProfile}
-                  style={{ width: '100%' }}
-                  onChange={(awsProfile) => this.setState({ awsProfile })}
-                >
-                  {document.vscodeData.profiles.map((profile) => (
-                    <Select.Option value={profile}>{profile}</Select.Option>
-                  ))}
-                </Select>
-              ) : (
+              <Select
+                showSearch={false}
+                style={{ width: '100%' }}
+                value={this.state.connection}
+                onChange={(connection) => this.setState({ connection })}
+              >
+                <Select.Option key="remote" value="remote">
+                  Remote
+                </Select.Option>
+                <Select.Option key="local" value="local">
+                  Local
+                </Select.Option>
+              </Select>
+            </td>
+          </tr>
+          {this.state.connection === 'local' && (
+            <tr>
+              <td className="td-left">Endpoint</td>
+              <td>
                 <Input
-                  value={this.state.awsProfile}
-                  onChange={(e) =>
-                    this.setState({ awsProfile: e.target.value })
-                  }
+                  value={this.state.endpoint}
+                  onChange={(e) => this.setState({ endpoint: e.target.value })}
                 />
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="td-left">Region</td>
-            <td>
-              <RegionSelect
-                region={this.state.region}
-                setRegion={(region) => this.setState({ region })}
-              />
-            </td>
-          </tr>
+              </td>
+            </tr>
+          )}
+          {this.state.connection === 'remote' && (
+            <tr>
+              <td className="td-left">AWS Profile</td>
+              <td>
+                {document.vscodeData.profiles &&
+                document.vscodeData.profiles.length &&
+                document.vscodeData.profiles.includes(this.props.awsProfile) ? (
+                  <Select
+                    value={this.state.awsProfile}
+                    style={{ width: '100%' }}
+                    onChange={(awsProfile) => this.setState({ awsProfile })}
+                  >
+                    {document.vscodeData.profiles.map((profile) => (
+                      <Select.Option value={profile}>{profile}</Select.Option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    value={this.state.awsProfile}
+                    onChange={(e) =>
+                      this.setState({ awsProfile: e.target.value })
+                    }
+                  />
+                )}
+              </td>
+            </tr>
+          )}
+          {this.state.connection === 'remote' && (
+            <tr>
+              <td className="td-left">Region</td>
+              <td>
+                <RegionSelect
+                  region={this.state.region}
+                  setRegion={(region) => this.setState({ region })}
+                />
+              </td>
+            </tr>
+          )}
           <tr>
             <td className="td-left">Table Name</td>
             <td>
@@ -169,12 +209,21 @@ export class AddDynamoDb extends React.Component<Props, State> {
             }
 
             try {
-              await addService({
-                source: 'dynamodb',
-                tableName: this.state.table,
-                awsProfile: this.state.awsProfile,
-                region: this.state.region,
-              })
+              if (this.state.connection === 'remote') {
+                await addService({
+                  source: 'dynamodb',
+                  tableName: this.state.table,
+                  awsProfile: this.state.awsProfile,
+                  region: this.state.region,
+                })
+              } else {
+                await addService({
+                  source: 'dynamodb',
+                  tableName: this.state.table,
+                  endpoint: this.state.endpoint,
+                  region: 'local',
+                })
+              }
               this.setState({
                 resultMessage: 'Service successfully added',
               })

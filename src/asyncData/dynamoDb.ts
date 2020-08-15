@@ -4,9 +4,11 @@ import { QueryFilter } from '../DynamoDb/DynamoDb'
 export function listDynamoDbTables({
   region,
   awsProfile,
+  endpoint,
 }: {
   region: string
   awsProfile: string
+  endpoint?: string
 }): Promise<{
   tableNames?: string[]
   error?: string
@@ -19,6 +21,7 @@ export function listDynamoDbTables({
       payload: {
         region,
         awsProfile,
+        endpoint
       },
     })
 
