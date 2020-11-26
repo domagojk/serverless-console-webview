@@ -112,7 +112,7 @@ export class LogEvent extends React.Component<{
 }
 
 function extractJSON(str: string) {
-  const match = str.match(/{[\s\S]*}/)
+  const match = str.match(/{[\s\S]*}|\[[\s\S]*\]/)
 
   if (match) {
     try {
