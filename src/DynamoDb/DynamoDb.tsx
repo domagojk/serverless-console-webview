@@ -15,6 +15,7 @@ import {
   discardChange,
   openChange,
   dynamodbOptions,
+  saveQueryAsDefault,
 } from '../asyncData/dynamoDb'
 import { Icon, Button, Tooltip, Menu, Checkbox } from 'antd'
 import { RelativeTime } from '../LogsPage/RelativeTime'
@@ -141,9 +142,9 @@ export class DynamoDb extends React.Component<any, State> {
 
     indexes: [] as Index[],
 
-    selectedQueryType: 'scan' as QueryType,
-    selectedIndex: 0,
-    selectedQueryFilters: [
+    selectedQueryType: document.vscodeData?.defaultQuery?.queryType ?? 'scan' as QueryType,
+    selectedIndex: document.vscodeData?.defaultQuery?.selectedIndex ?? 0,
+    selectedQueryFilters: document.vscodeData?.defaultQuery?.selectedQueryFilters ?? [
       {
         id: Math.random(),
         comparison: '=',
@@ -225,8 +226,8 @@ export class DynamoDb extends React.Component<any, State> {
 
     await this.fetchItems({
       filters: this.state.selectedQueryFilters,
-      index: 0,
-      queryType: 'scan',
+      index: this.state.selectedIndex,
+      queryType: this.state.selectedQueryType,
       lastFetchResult: null,
       lastEvaluatedKey: null,
     })
@@ -246,6 +247,12 @@ export class DynamoDb extends React.Component<any, State> {
             ScannedCount: this.state.fetchedScannedCount,
             timeFetched: this.state.fetchedTimestamp,
           },
+        })
+      } else if (event?.data?.type === 'saveAsDefault') {
+        saveQueryAsDefault({
+          queryType: this.state.selectedQueryType,
+          selectedIndex: this.state.selectedIndex,
+          selectedQueryFilters: this.state.selectedQueryFilters
         })
       }
     })

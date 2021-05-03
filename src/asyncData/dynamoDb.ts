@@ -230,6 +230,13 @@ export function editItem(payload: {
   })
 }
 
+export function saveQueryAsDefault(payload) {
+  vscode.postMessage({
+    command: 'saveQueryAsDefault',
+    payload,
+  })
+}
+
 export function deleteItem(payload: {
   tableName: string
   queryType: string
