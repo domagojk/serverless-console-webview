@@ -49,7 +49,7 @@
   "devDependencies": {
     "@types/moment": "^2.13.0",
     "@types/react-syntax-highlighter": "^11.0.1",
-    "aws-sdk": "^2.610.0"
+    "aws-sdk": "^2.1373.0"
   },
   "prettier": {
     "tabWidth": 2,
