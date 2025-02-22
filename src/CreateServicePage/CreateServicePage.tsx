@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Logs } from './Logs/Logs'
 import './createServicePage.css'
 import { AddDynamoDb } from './DynamoDb/AddDynamoDb'
+import { CloudUI } from './CloudUi'
 
 export function CreateServicePage() {
   const [service, setService] = useState('logs')
@@ -22,6 +23,14 @@ export function CreateServicePage() {
             className={`button-box ${service === 'dynamodb' ? 'active' : ''}`}
           >
             <span>DynamoDB</span>
+          </div>
+
+          <div
+            onClick={() => setService('cloudui')}
+            className={`button-box ${service === 'cloudui' ? 'active' : ''}`}
+          >
+            <span>CloudUI</span>
+            <span className="sticker">New!</span>
           </div>
         </div>
       }
@@ -45,6 +54,7 @@ export function CreateServicePage() {
         {service === 'dynamodb' && (
           <AddDynamoDb awsProfile="default" region="us-east-1" />
         )}
+        {service === 'cloudui' && <CloudUI />}
       </div>
     </div>
   )

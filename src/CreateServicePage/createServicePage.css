@@ -101,12 +101,12 @@
 .button-box.pro.active span {
   opacity: 1;
 }
-.button-box.pro span.sticker {
+.button-box span.sticker {
   opacity: 1;
   position: absolute;
   top: -6px;
   right: -7px;
-  background: #00426f;
+  background: #ff0000;
   padding: 0 4px;
   font-size: 9px;
   border-radius: 2px;
@@ -114,6 +114,7 @@
   line-height: 17px;
   color: #fff;
   letter-spacing: 0.5px;
+  rotate: 20deg;
 }
 
 .form-table {

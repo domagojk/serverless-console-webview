@@ -1,10 +1,10 @@
 import './logsPage.css'
 import React, { useState } from 'react'
-import { Tabs, Icon, Tooltip } from 'antd'
+import { Tabs, Icon, Tooltip, Modal } from 'antd'
 import { TabWrapper } from './TabWrapper'
 import { SearchPage } from './SearchPage'
 import { viewstateChanged } from '../asyncData/asyncData'
-import { CoffeeIcon } from '../AddServicePage/CoffeeIcon'
+import { CloudUiIcon } from '../AddServicePage/CloudUiIcon'
 
 const { TabPane } = Tabs
 
@@ -113,7 +113,8 @@ export function LogsPage() {
                     isActive={activePage === 'logs' && activeTab === tab.title}
                     autoRefreshInterval={refreshVal}
                     onAutoRefreshChange={(autoRefreshInterval) => {
-                      document.vscodeData.autoRefreshInterval = autoRefreshInterval
+                      document.vscodeData.autoRefreshInterval =
+                        autoRefreshInterval
                       setRefreshVal(autoRefreshInterval)
                     }}
                   />
@@ -121,11 +122,57 @@ export function LogsPage() {
               )}
             </TabPane>
           ))}
-          <div style={{ position: 'absolute', top: 12, right: 0 }}>
-            <Tooltip title="Buy me a coffee?" placement="bottomLeft">
-              <a href="https://www.buymeacoffee.com/y39DWQf">
-                <Icon style={{ width: 19 }} component={CoffeeIcon} />
-              </a>
+          <div
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 0,
+              textAlign: 'right',
+            }}
+          >
+            <Tooltip title="AWS Console Alternative" placement="bottomLeft">
+              <Icon
+                onClick={() => {
+                  Modal.info({
+                    className: 'cloud-ui-modal',
+                    title: 'Standalone Desktop Alternative to the AWS Console',
+                    content: (
+                      <div>
+                        <p>
+                          <strong>CloudUI</strong> is an{' '}
+                          <strong>advanced version</strong> of this extension.
+                        </p>
+                        <p>
+                          An alternative to the AWS Console with{' '}
+                          <strong>a powerful</strong>,{' '}
+                          <strong>user-friendly</strong> interface for the most
+                          used services:
+                        </p>
+                        <ul>
+                          <li>Custom Dashboards</li>
+                          <li>Logs</li>
+                          <li>DynamoDB Client</li>
+                          <li>SQL Client</li>
+                          <li>S3 Manager</li>
+                          <li>EC2 Manager</li>
+                        </ul>
+                        <p>
+                          Get early access:{' '}
+                          <a href="https://www.cloud-ui.com/">Cloud-UI.com</a>.
+                        </p>
+                        <img
+                          src="https://www.cloud-ui.com/hero.png"
+                          alt="CloudUI"
+                        />
+                      </div>
+                    ),
+                    maskClosable: true,
+                    width: 500,
+                  })
+                }}
+                style={{ width: 24, height: 24, cursor: 'pointer' }}
+                component={CloudUiIcon}
+              />
             </Tooltip>
           </div>
         </Tabs>

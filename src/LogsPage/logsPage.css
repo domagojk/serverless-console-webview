@@ -234,3 +234,13 @@ mark {
 .blurforsearch {
   opacity: 0.3;
 }
+
+.ant-modal.cloud-ui-modal .ant-modal-confirm-body .anticon-info-circle {
+  display: none;
+}
+.ant-modal.cloud-ui-modal .ant-modal-confirm-body .ant-modal-confirm-content {
+  margin-left: 0;
+}
+.ant-modal.cloud-ui-modal .ant-modal-confirm-btns {
+  display: none;
+}
